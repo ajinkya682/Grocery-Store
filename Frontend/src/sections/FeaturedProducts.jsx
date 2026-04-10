@@ -1,18 +1,25 @@
 // src/sections/FeaturedProducts.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { products } from '../data/products';
+import { useProduct } from '../context/ProductContext';
 import ProductCard from '../components/ui/ProductCard';
 
-const tabs = ['All', 'Rice & Grains', 'Lentils', 'Masalas & Spices', 'Oils', 'Flour', 'Dairy'];
+const tabs = ['All', 'Rice & Grains', 'Lentils & Dal', 'Masalas & Spices', 'Oils', 'Flour & Atta', 'Dairy'];
 
 const FeaturedProducts = () => {
+  const { products } = useProduct();
   const [activeTab, setActiveTab] = useState('All');
+  const [randomSix, setRandomSix] = useState([]);
+
+  useEffect(() => {
+    const shuffled = [...products].sort(() => 0.5 - Math.random());
+    setRandomSix(shuffled.slice(0, 6));
+  }, []);
 
   const filtered = activeTab === 'All'
-    ? products
-    : products.filter(p => p.category === activeTab);
+    ? randomSix
+    : products.filter(p => p.category === activeTab).slice(0, 6);
 
   return (
     <section id="featured-products" className="py-16 bg-white">
@@ -54,7 +61,7 @@ const FeaturedProducts = () => {
         </div>
 
         {/* Products grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {filtered.map((product, i) => (
             <div
               key={product.id}

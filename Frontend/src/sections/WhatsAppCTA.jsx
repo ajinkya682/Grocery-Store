@@ -60,7 +60,7 @@ const WhatsAppCTA = () => {
           <button
             id="whatsapp-cta-btn"
             onClick={orderViaWhatsApp}
-            className="btn-whatsapp text-base px-8 py-4 text-lg mx-auto"
+            className="bg-accent text-white px-6 py-3 rounded-xl pulse-btn flex items-center justify-center gap-2 mx-auto font-bold shadow-soft"
           >
             <WhatsAppIcon />
             {totalItems > 0 ? `Order Now (${totalItems} items)` : 'Order Now'}

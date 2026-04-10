@@ -47,7 +47,7 @@ const OrderSteps = () => {
         {/* Steps */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
           {/* Connector line (desktop) */}
-          <div className="hidden md:block absolute top-12 left-1/6 right-1/6 h-0.5 bg-gradient-to-r from-primary-200 via-saffron-300 to-green-300 z-0" style={{ left: '22%', right: '22%' }} />
+          <div className="hidden md:block absolute top-12 left-0 w-full h-[2px] bg-gray-200 -z-10"></div>
 
           {steps.map(({ step, icon: Icon, title, description, color, lightBg, iconColor }, i) => (
             <div

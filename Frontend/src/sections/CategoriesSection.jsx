@@ -25,8 +25,8 @@ const CategoriesSection = () => {
         </div>
 
         {/* Category grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
-          {categories.map((category, i) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          {categories.slice(0, 5).map((category, i) => (
             <Link
               key={category.id}
               to={`/products?category=${category.slug}`}

@@ -4,22 +4,22 @@ import { ArrowRight } from 'lucide-react';
 const CategoryCard = ({ category, index }) => {
   return (
     <div
-      className="group relative overflow-hidden rounded-2xl cursor-pointer reveal"
+      className="group relative overflow-visible cursor-pointer transition-all duration-300 hover:scale-[1.03] hover:shadow-card bg-white p-2 rounded-2xl"
       style={{ animationDelay: `${index * 0.08}s` }}
     >
       {/* Image */}
-      <div className="aspect-square bg-gray-100 overflow-hidden rounded-2xl border border-gray-100 shadow-card">
+      <div className="aspect-square bg-gray-100 overflow-hidden rounded-xl">
         <img
           src={category.image}
           alt={category.name}
-          className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-90"
+          className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
         />
       </div>
 
-      {/* Hot badge */}
-      {category.hot && (
-        <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shadow">
-          🔥 Hot
+      {/* Featured badge */}
+      {category.name === 'Masalas & Spices' && (
+        <span className="absolute top-4 right-4 bg-accent text-white text-xs px-2 py-1 rounded-md font-bold shadow-md z-10">
+          Featured
         </span>
       )}
 

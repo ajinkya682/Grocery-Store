@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,6 +9,7 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    transition: all 0.3s ease;
   }
 
   html {
@@ -16,7 +17,9 @@
   }
 
   body {
-    @apply font-sans bg-cream text-gray-800 antialiased;
+    background-color: theme('colors.light');
+    color: theme('colors.dark');
+    @apply font-sans antialiased;
     overflow-x: hidden;
   }
 
@@ -28,41 +31,60 @@
     @apply bg-gray-100;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-primary-600 rounded-full;
+    @apply bg-primary rounded-full;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center gap-2 px-6 py-3 bg-saffron-500 hover:bg-saffron-600 text-white font-semibold rounded-full transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95;
+    @apply inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-orange-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-soft hover:-translate-y-0.5 active:scale-95;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center gap-2 px-6 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-full transition-all duration-300 hover:bg-white hover:text-forest;
+    @apply inline-flex items-center gap-2 px-6 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-xl transition-all duration-300 hover:bg-white hover:text-primary;
   }
 
   .btn-green {
-    @apply inline-flex items-center gap-2 px-6 py-3 bg-primary-700 hover:bg-primary-800 text-white font-semibold rounded-full transition-all duration-300 shadow-md hover:shadow-green hover:-translate-y-0.5;
+    @apply inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-[#07261d] text-white font-semibold rounded-xl transition-all duration-300 shadow-soft hover:-translate-y-0.5;
   }
 
   .btn-whatsapp {
-    @apply inline-flex items-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold rounded-full transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5;
+    @apply inline-flex items-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold rounded-xl transition-all duration-300 shadow-soft hover:-translate-y-0.5;
   }
 
   .section-title {
-    @apply text-2xl md:text-3xl font-display font-bold text-forest tracking-tight;
+    @apply text-2xl md:text-3xl font-display font-bold text-primary tracking-tight;
   }
 
   .section-tag {
-    @apply inline-block text-xs font-bold tracking-widest uppercase text-saffron-500 mb-2;
+    @apply inline-block text-xs font-bold tracking-widest uppercase text-accent mb-2;
   }
 
   .card-hover {
-    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-hover;
+    @apply hover:scale-[1.03] hover:shadow-card transition-all duration-300;
   }
 
   .container-custom {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .hover-underline {
+    position: relative;
+  }
+
+  .hover-underline::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -4px;
+    width: 0%;
+    height: 2px;
+    background: #F59E0B;
+    transition: width 0.3s ease;
+  }
+
+  .hover-underline:hover::after {
+    width: 100%;
   }
 }
 
@@ -84,16 +106,51 @@
   animation: shimmer 1.5s infinite;
 }
 
-/* Scroll reveal utility (used via JS intersection observer) */
-.reveal {
-  opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
-.reveal.visible {
-  opacity: 1;
-  transform: translateY(0);
+.pulse-btn {
+  animation: pulse 2s infinite;
+}
+
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 1s;
+}
+
+.ripple:active::after {
+  transform: scale(0, 0);
+  opacity: 0.3;
+  transition: 0s;
+}
+
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-page {
+  animation: page-fade-in 0.5s ease-out forwards;
 }
 
 /* Nav blur on scroll */

@@ -65,20 +65,38 @@ export const CartProvider = ({ children }) => {
   const totalPrice = state.items.reduce((s, i) => s + i.price * i.qty, 0);
 
   // WhatsApp order message builder
-  const orderViaWhatsApp = () => {
+  const orderViaWhatsApp = (customerInfo = null) => {
     const phone = '919876543210'; // replace with real number
     const lines = state.items.map(
       i => `• ${i.name} (${i.weight}) × ${i.qty} = ₹${i.price * i.qty}`
     );
-    const msg = [
+    let msgArr = [
       '🛒 *New Order from Grocery Store Website*',
       '',
-      ...lines,
-      '',
-      `*Total: ₹${totalPrice}*`,
-      '',
-      'Please confirm my order. Thank you!',
-    ].join('\n');
+    ];
+
+    if (customerInfo && customerInfo.name) {
+      msgArr.push(`*Customer Details:*`);
+      msgArr.push(`Name: ${customerInfo.name}`);
+      msgArr.push(`Mobile: ${customerInfo.mobile}`);
+      msgArr.push(`Address: ${customerInfo.address}`);
+      msgArr.push('');
+    }
+
+    msgArr.push('*Order Details:*');
+    msgArr.push(...lines);
+    msgArr.push('');
+    
+    const delivery = totalPrice >= 499 ? 0 : 40;
+    msgArr.push(`*Subtotal: ₹${totalPrice}*`);
+    if (delivery > 0) {
+      msgArr.push(`*Delivery: ₹${delivery}*`);
+    }
+    msgArr.push(`*Total Amount: ₹${totalPrice + delivery}*`);
+    msgArr.push('');
+    msgArr.push('Please confirm my order. Thank you!');
+
+    const msg = msgArr.join('\n');
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 

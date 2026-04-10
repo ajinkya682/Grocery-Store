@@ -7,42 +7,29 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50:  '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
-          950: '#052e16',
-        },
-        forest: {
-          DEFAULT: '#1a3a1a',
-          light:   '#2d5a2d',
-          deep:    '#0d2010',
-        },
-        saffron: {
-          DEFAULT: '#e67e22',
-          light:   '#f39c12',
-          dark:    '#d35400',
-          50:      '#fff8ed',
-          100:     '#fdeece',
-          200:     '#fbda9a',
-          300:     '#f8be63',
-          400:     '#f4982c',
-          500:     '#e67e22',
-          600:     '#d35400',
-        },
-        cream: '#fdfbf7',
-        gold:  '#c8a951',
+        primary: '#0B3D2E',     // Deep Green
+        secondary: '#8B5E34',   // Warm Brown
+        accent: '#F59E0B',      // Orange
+        dark: '#1F2937',        // Text
+        light: '#F9F7F3',       // Background
+        
+        // Keeping legacy ones just in case to prevent breaking other pages, though UI will transition to new ones.
+        forest: { DEFAULT: '#0B3D2E', light: '#145c46', deep: '#06261d' },
+        saffron: { DEFAULT: '#F59E0B', light: '#fcd34d', dark: '#d97706', 50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' },
+        cream: '#F9F7F3',
+      },
+      borderRadius: {
+        xl: '1rem',
+        '2xl': '1.5rem',
+      },
+      boxShadow: {
+        soft: '0 10px 25px rgba(0,0,0,0.08)',
+        card: '0 15px 35px rgba(0,0,0,0.12)',
+        green: '0 4px 20px rgba(11, 61, 46, 0.3)',
       },
       fontFamily: {
         sans:    ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Playfair Display', 'Georgia', 'serif'],
+        display: ['Outfit', 'Inter', 'sans-serif'],
       },
       animation: {
         'fade-in-up':   'fadeInUp 0.6s ease forwards',
@@ -69,14 +56,6 @@ export default {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%':      { transform: 'translateY(-8px)' },
         },
-      },
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-      },
-      boxShadow: {
-        'card':  '0 2px 20px rgba(0,0,0,0.08)',
-        'hover': '0 8px 40px rgba(0,0,0,0.15)',
-        'green': '0 4px 20px rgba(21,128,61,0.3)',
       },
     },
   },
