@@ -68,7 +68,7 @@ const Cart = () => {
                 {items.map((item, index) => (
                   <div key={item.id} className={`flex gap-6 ${index !== items.length - 1 ? 'border-b border-gray-50 pb-8' : ''}`}>
                     <div className="w-24 h-24 bg-gray-50 rounded-2xl overflow-hidden flex-shrink-0 border border-gray-100">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={item.images?.[0]?.url || item.image || '/placeholder-grocery.png'} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
                       <div>

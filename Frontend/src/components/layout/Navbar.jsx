@@ -178,7 +178,7 @@ const Navbar = ({ isMobile }) => {
                         onClick={() => { navigate(`/product/${item.id}`); setShowSuggestions(false); }}
                         className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors"
                       >
-                        <img src={item.image} alt="" className="w-8 h-8 rounded-lg object-cover bg-gray-100" />
+                        <img src={item.images?.[0]?.url || item.image || '/placeholder-grocery.png'} alt={item.name} className="w-8 h-8 rounded-lg object-cover bg-gray-100" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-bold text-dark truncate">{item.name}</p>
                           <p className="text-[10px] text-gray-400">{item.weight}</p>
@@ -296,7 +296,7 @@ const Navbar = ({ isMobile }) => {
                       onClick={() => { navigate(`/product/${item.id}`); setSearchOpen(false); }}
                       className="flex items-center gap-4 p-2 bg-gray-50/50 rounded-2xl"
                     >
-                      <img src={item.image} alt="" className="w-12 h-12 rounded-xl object-cover" />
+                      <img src={item.images?.[0]?.url || item.image || '/placeholder-grocery.png'} alt={item.name} className="w-12 h-12 rounded-xl object-cover" />
                       <div>
                         <p className="text-sm font-bold text-dark">{item.name}</p>
                         <p className="text-xs text-gray-400">{item.weight} • ₹{item.price}</p>

@@ -61,9 +61,16 @@ export const AuthProvider = ({ children }) => {
       storeAuthData(data.data.user, data.data.accessToken, data.data.refreshToken);
       return { success: true };
     } catch (err) {
+      let message = err.response?.data?.message || 'Registration failed';
+      
+      // Handle Conflict (409) specifically if message is generic
+      if (err.response?.status === 409 && message === 'Registration failed') {
+        message = 'User already exists with this mobile/email.';
+      }
+
       return {
         success: false,
-        message: err.response?.data?.message || 'Registration failed',
+        message,
       };
     }
   };
