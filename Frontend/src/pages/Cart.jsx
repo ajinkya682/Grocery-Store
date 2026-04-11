@@ -1,40 +1,37 @@
-// src/pages/Cart.jsx
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ShoppingCart, ArrowLeft, Trash2, MapPin, Phone, User } from 'lucide-react';
+import { useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { ShoppingCart, ArrowLeft, Trash2, MapPin, CheckCircle2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 const Cart = () => {
   const { items, removeItem, updateQty, totalPrice, totalItems, orderViaWhatsApp } = useCart();
-  const [userInfo, setUserInfo] = useState({
-    name: '',
-    mobile: '',
-    address: ''
-  });
+  const { currentUser, isUserAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setUserInfo(prev => ({ ...prev, [name]: value }));
-  };
+  useEffect(() => {
+    if (!isUserAuthenticated) {
+      navigate('/userlogin', { state: { from: location.pathname }, replace: true });
+    }
+  }, [isUserAuthenticated, navigate, location.pathname]);
+
+  if (!isUserAuthenticated) return null;
 
   const handleCheckout = () => {
-    if (!userInfo.name || !userInfo.mobile || !userInfo.address) {
-      alert("Please fill in all your details for delivery.");
-      return;
-    }
-    orderViaWhatsApp(userInfo);
+    orderViaWhatsApp();
   };
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[80vh] bg-cream flex flex-col items-center justify-center py-12 px-4">
-        <div className="w-24 h-24 bg-primary-50 rounded-full flex items-center justify-center mb-6 shadow-sm">
-          <ShoppingCart size={40} className="text-primary-400" />
+      <div className="min-h-[80vh] bg-light flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+          <ShoppingCart size={40} className="text-primary" />
         </div>
-        <h1 className="text-3xl font-display font-bold text-forest mb-3">Your Basket is Empty</h1>
-        <p className="text-gray-500 mb-8 max-w-sm text-center">Looks like you haven't added any items yet. Explore our fresh and premium selections.</p>
-        <Link to="/products" className="btn-green inline-flex items-center gap-2 group">
-          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Start Shopping
+        <h1 className="text-3xl font-display font-black text-forest mb-3">Your Basket is Empty</h1>
+        <p className="text-gray-500 mb-8 max-w-sm font-medium">Explore our premium selections and start filling your basket with heritage flavors.</p>
+        <Link to="/products" className="btn-primary">
+          Explore Products
         </Link>
       </div>
     );
@@ -44,167 +41,153 @@ const Cart = () => {
   const finalTotal = totalPrice + deliveryFee;
 
   return (
-    <div className="min-h-screen bg-cream py-12">
+    <div className="min-h-screen bg-light py-12">
       <div className="container-custom">
-        <div className="flex items-center gap-4 mb-8">
-          <Link to="/" className="w-10 h-10 bg-white shadow-sm rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors">
-            <ArrowLeft size={18} className="text-gray-600" />
-          </Link>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-3xl font-display font-bold text-forest">Review Your Order</h1>
-            <p className="text-gray-500 text-sm">{totalItems} items in your basket</p>
+            <span className="text-accent text-[10px] font-black uppercase tracking-[0.3em] mb-2 block">Checkout</span>
+            <h1 className="text-[2.5rem] font-display font-black text-forest leading-tight">Review Your Order</h1>
+          </div>
+          <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-2xl shadow-card border border-gray-100">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+               <ShoppingCart size={20} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Items</p>
+              <p className="font-bold text-forest leading-none">{totalItems} Products</p>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           
           {/* Left Column: Cart Items */}
-          <div className="lg:col-span-7 space-y-4">
-            <div className="bg-white rounded-3xl shadow-card p-6 border border-gray-100">
-              <h2 className="text-xl font-bold text-forest mb-6 border-b border-gray-100 pb-4">Cart Items</h2>
-              <div className="space-y-6">
+          <div className="lg:col-span-7 space-y-6">
+            <div className="bg-white rounded-[2.5rem] shadow-card p-8 border border-gray-100">
+              <div className="space-y-8">
                 {items.map((item, index) => (
-                  <div key={item.id} className={`flex items-center gap-4 ${index !== items.length - 1 ? 'border-b border-gray-50 pb-6' : ''}`}>
-                    <div className="w-20 h-20 bg-gray-50 rounded-2xl overflow-hidden flex-shrink-0 border border-gray-100 p-1">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-xl" />
+                  <div key={item.id} className={`flex gap-6 ${index !== items.length - 1 ? 'border-b border-gray-50 pb-8' : ''}`}>
+                    <div className="w-24 h-24 bg-gray-50 rounded-2xl overflow-hidden flex-shrink-0 border border-gray-100">
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-gray-800 text-base line-clamp-1">{item.name}</p>
-                      <p className="text-sm font-medium text-gray-500 mt-0.5">{item.weight}</p>
-                      <div className="flex items-center justify-between mt-3">
-                        <p className="text-primary-700 font-bold text-lg">₹{item.price}</p>
-                        {/* Qty controls */}
-                        <div className="flex items-center gap-1 bg-gray-50 rounded-full p-1 border border-gray-100">
+                    <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
+                      <div>
+                        <div className="flex items-start justify-between gap-4">
+                          <h3 className="font-black text-forest text-lg truncate">{item.name}</h3>
                           <button
-                            onClick={() => updateQty(item.id, item.qty - 1)}
-                            className="w-8 h-8 rounded-full bg-white hover:bg-gray-100 shadow-sm flex items-center justify-center text-gray-600 font-bold transition-colors"
+                            onClick={() => removeItem(item.id)}
+                            className="text-red-400 hover:text-red-600 transition-colors"
                           >
-                            −
+                            <Trash2 size={18} />
                           </button>
-                          <span className="text-sm font-bold w-6 text-center text-forest">{item.qty}</span>
-                          <button
-                            onClick={() => updateQty(item.id, item.qty + 1)}
-                            className="w-8 h-8 rounded-full bg-primary-500 hover:bg-primary-600 shadow-sm flex items-center justify-center text-white font-bold transition-colors"
-                          >
-                            +
-                          </button>
+                        </div>
+                        <p className="text-sm font-bold text-gray-400">{item.weight}</p>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <p className="text-primary font-black text-xl">₹{item.price}</p>
+                        <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-1.5 border border-gray-100">
+                          <button onClick={() => updateQty(item.id, item.qty - 1)} className="w-8 h-8 flex items-center justify-center font-bold text-gray-400 hover:text-primary">−</button>
+                          <span className="font-black text-forest w-4 text-center">{item.qty}</span>
+                          <button onClick={() => updateQty(item.id, item.qty + 1)} className="w-8 h-8 flex items-center justify-center font-bold text-gray-400 hover:text-primary">+</button>
                         </div>
                       </div>
                     </div>
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="p-2 h-10 w-10 self-start mt-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-400 hover:text-red-600 transition-colors flex items-center justify-center"
-                      title="Remove Item"
-                    >
-                      <Trash2 size={18} />
-                    </button>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
 
-          {/* Right Column: Checkout Form & Summary */}
-          <div className="lg:col-span-5 space-y-6 sticky top-24">
-            
-            {/* Delivery Details Form */}
-            <div className="bg-white rounded-3xl shadow-card p-6 border border-gray-100">
-              <h2 className="text-xl font-bold text-forest mb-5 flex items-center gap-2">
-                <MapPin size={20} className="text-primary-500" />
-                Delivery Details
-              </h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
-                    <User size={14} className="text-gray-400"/> Full Name
-                  </label>
-                  <input 
-                    type="text" 
-                    name="name"
-                    value={userInfo.name}
-                    onChange={handleInputChange}
-                    placeholder="Enter your full name" 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all text-gray-800 placeholder-gray-400"
-                  />
+            {/* Benefits */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white p-6 rounded-3xl border border-gray-100 flex items-center gap-4">
+                <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary">
+                  <CheckCircle2 size={24} />
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
-                    <Phone size={14} className="text-gray-400"/> Mobile Number
-                  </label>
-                  <input 
-                    type="tel" 
-                    name="mobile"
-                    value={userInfo.mobile}
-                    onChange={handleInputChange}
-                    placeholder="10-digit mobile number" 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all text-gray-800 placeholder-gray-400"
-                  />
+                <p className="text-xs font-bold text-gray-500 leading-tight">Freshly packed from Heritage stocks</p>
+              </div>
+              <div className="bg-white p-6 rounded-3xl border border-gray-100 flex items-center gap-4">
+                <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary">
+                  <MapPin size={24} />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
-                    <MapPin size={14} className="text-gray-400"/> Complete Address
-                  </label>
-                  <textarea 
-                    name="address"
-                    value={userInfo.address}
-                    onChange={handleInputChange}
-                    placeholder="House no, Building, Street, Area, Landmark..." 
-                    rows="3"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all text-gray-800 placeholder-gray-400 resize-none"
-                  ></textarea>
-                </div>
+                <p className="text-xs font-bold text-gray-500 leading-tight">Reliable delivery across your area</p>
               </div>
             </div>
+          </div>
 
-            {/* Order Summary */}
-            <div className="bg-white rounded-3xl shadow-card p-6 border border-gray-100 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-full blur-3xl -mr-10 -mt-10 opacity-60 pointer-events-none"></div>
+          {/* Right Column: Checkout Summary */}
+          <div className="lg:col-span-5 space-y-8 sticky top-28">
+            
+            {/* Delivery Info Box */}
+            <div className="bg-forest text-white rounded-[2.5rem] shadow-card p-8 relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-10 -mt-10 blur-2xl" />
+               <h3 className="text-xs font-black uppercase tracking-[0.2em] opacity-60 mb-6 flex items-center gap-2">
+                 <MapPin size={14} /> Delivering To
+               </h3>
+               
+               <div className="space-y-4 relative z-10">
+                 <div>
+                   <p className="text-2xl font-black">{currentUser.name}</p>
+                   <p className="text-sm font-bold opacity-80 mt-1">{currentUser.mobile}</p>
+                 </div>
+                 <div className="pt-4 border-t border-white/10">
+                   <p className="text-sm font-medium leading-relaxed italic">
+                     "{currentUser.address}, {currentUser.pincode}"
+                   </p>
+                 </div>
+                 <Link to="/userlogin" className="inline-block text-[10px] font-black uppercase tracking-widest text-accent hover:underline pt-2">
+                   Edit Profile Details
+                 </Link>
+               </div>
+            </div>
+
+            {/* Price Summary */}
+            <div className="bg-white rounded-[2.5rem] shadow-card p-8 border border-gray-100">
+              <h3 className="text-lg font-black text-forest mb-6">Price Details</h3>
               
-              <h2 className="text-xl font-bold text-forest mb-5 relative z-10">Order Summary</h2>
-              
-              <div className="space-y-3 relative z-10">
-                <div className="flex justify-between items-center text-gray-600">
-                  <span className="font-medium">Subtotal ({totalItems} items)</span>
-                  <span className="font-semibold text-gray-800">₹{totalPrice}</span>
+              <div className="space-y-4 mb-8">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-bold text-gray-400">Items Total</span>
+                  <span className="font-black text-forest">₹{totalPrice}</span>
                 </div>
-                
-                <div className="flex justify-between items-center text-gray-600">
-                  <span className="font-medium">Delivery</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-bold text-gray-400">Delivery Fee</span>
                   {deliveryFee === 0 ? (
-                     <span className="text-primary-600 font-bold bg-primary-50 px-2 py-0.5 rounded-md text-sm">FREE</span>
+                    <span className="text-sm font-black text-primary uppercase tracking-widest">Free</span>
                   ) : (
-                     <span className="font-semibold text-gray-800">₹{deliveryFee}</span>
+                    <span className="font-black text-forest">₹{deliveryFee}</span>
                   )}
                 </div>
-                
                 {deliveryFee > 0 && (
-                  <p className="text-xs text-saffron-600 bg-saffron-50 p-2 rounded-lg mt-1 border border-saffron-100">
-                    Add ₹{499 - totalPrice} more for FREE delivery
-                  </p>
-                )}
-                
-                <div className="border-t border-gray-100 pt-4 mt-2">
-                  <div className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl">
-                    <span className="font-display font-bold text-xl text-forest">Total</span>
-                    <span className="font-bold text-2xl text-primary-700">₹{finalTotal}</span>
+                  <div className="bg-amber-50 p-4 rounded-2xl">
+                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">
+                      Spend ₹{499 - totalPrice} more for FREE delivery
+                    </p>
                   </div>
+                )}
+              </div>
+
+              <div className="pt-6 border-t border-gray-100 mb-8">
+                <div className="flex justify-between items-end">
+                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Total Payable</p>
+                  <p className="text-4xl font-black text-primary">₹{finalTotal}</p>
                 </div>
               </div>
-              
+
               <button
                 onClick={handleCheckout}
-                className="btn-whatsapp w-full justify-center mt-6 text-base py-4 rounded-2xl relative z-10 group overflow-hidden"
+                className="w-full btn-whatsapp py-5 rounded-2xl flex flex-col items-center gap-0.5"
               >
-                <span className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></span>
-                <svg className="w-5 h-5 relative z-10" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.116 1.528 5.843L.057 23.786a.75.75 0 0 0 .921.921l5.943-1.471A11.94 11.94 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.808 9.808 0 0 1-5.032-1.381l-.36-.214-3.728.977.993-3.63-.235-.373A9.785 9.785 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z" />
-                </svg>
-                <span className="relative z-10 font-bold">Secure WhatsApp Order</span>
+                <div className="flex items-center gap-2">
+                  <Phone size={18} />
+                  <span className="text-lg font-black">Place Order via WhatsApp</span>
+                </div>
+                <span className="text-[10px] font-bold opacity-80 uppercase tracking-widest">Secure Heritage Checkout</span>
               </button>
+
+              <p className="text-center mt-6 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">
+                Verified Secure Order System
+              </p>
             </div>
           </div>
           

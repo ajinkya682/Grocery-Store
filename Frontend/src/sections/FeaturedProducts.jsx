@@ -61,11 +61,11 @@ const FeaturedProducts = () => {
         </div>
 
         {/* Products grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="adaptive-grid">
           {filtered.map((product, i) => (
             <div
               key={product.id}
-              className="reveal"
+              className="reveal h-full"
               style={{ transitionDelay: `${i * 80}ms` }}
             >
               <ProductCard product={product} />
@@ -75,16 +75,17 @@ const FeaturedProducts = () => {
 
         {/* No results */}
         {filtered.length === 0 && (
-          <div className="text-center py-16 text-gray-400">
+          <div className="text-center py-16 text-gray-400 glass-card rounded-[2.5rem]">
             <p className="text-4xl mb-3">🛒</p>
-            <p className="font-semibold">No products in this category yet.</p>
+            <p className="font-semibold text-forest">No products in this category yet.</p>
           </div>
         )}
 
         {/* Mobile view all */}
-        <div className="sm:hidden mt-8 text-center">
-          <Link to="/products" className="btn-green">
-            View All Products <ArrowRight size={15} />
+        <div className="sm:hidden mt-10">
+          <Link to="/products" className="btn-primary w-full py-4 text-base font-black">
+            View All Products
+            <ArrowRight size={18} />
           </Link>
         </div>
       </div>

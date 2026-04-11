@@ -1,10 +1,13 @@
 // src/components/layout/Navbar.jsx
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Leaf, Phone } from "lucide-react";
+import { Leaf, Phone, User, Search as SearchIcon, X as CloseIcon } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../../context/CartContext";
 import { useStore } from "../../context/StoreContext";
 import { useProduct } from "../../context/ProductContext";
+import { useAuth } from "../../context/AuthContext";
+import { STORE_NAME } from "../../config/constants";
 
 const navLinks = [
   { label: "Home", path: "/" },
@@ -37,62 +40,26 @@ const CartIcon = () => (
   </svg>
 );
 
-const SearchIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="w-5 h-5"
-  >
-    <circle cx="11" cy="11" r="8" />
-    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-  </svg>
-);
-
-const CloseIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="w-5 h-5"
-  >
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
-
-const Navbar = () => {
+const Navbar = ({ isMobile }) => {
   const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   
-  const { totalItems, orderViaWhatsApp, cartItems } = useCart();
+  const { totalItems, openCart, orderViaWhatsApp } = useCart();
   const { products } = useProduct();
   const { storeSettings } = useStore();
+  const { isUserAuthenticated, currentUser, logoutUser } = useAuth();
+  
   const location = useLocation();
   const navigate = useNavigate();
   const searchContainerRef = useRef(null);
 
-  // Close suggestions on outside click
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
@@ -111,7 +78,7 @@ const Navbar = () => {
   }, [query, products]);
 
   const handleSearchSubmit = (e) => {
-    if (e.key === "Enter" && query.trim()) {
+    if ((e.key === "Enter" || e.type === "click") && query.trim()) {
       navigate(`/search?q=${encodeURIComponent(query.trim())}`);
       setSearchOpen(false);
       setShowSuggestions(false);
@@ -119,290 +86,226 @@ const Navbar = () => {
     }
   };
 
-  const handleCheckoutClick = () => {
-    // Requirements: We must be select at least one item to order on WhatsApp
-    if (totalItems === 0 || cartItems.length === 0) {
-      alert("Uh oh! Your cart is empty. Please add at least one item to order.");
+  const handleCartClick = () => {
+    if (!isUserAuthenticated) {
+      navigate('/userlogin', { state: { from: location.pathname } });
     } else {
-      orderViaWhatsApp();
-      setMenuOpen(false);
+      openCart();
     }
   };
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // Close drawer on route change
-  useEffect(() => {
-    setMenuOpen(false);
-    setShowSuggestions(false);
-    setQuery("");
-  }, [location]);
-
   return (
-    <>
-      {/* Top strip */}
-      <div className="hidden md:flex items-center justify-between bg-forest text-white text-xs px-6 py-1.5 font-sans">
-        <span className="flex items-center gap-1.5">
-          <Phone size={11} className="text-saffron-400" />
-          Order via WhatsApp:{" "}
-          <strong className="text-saffron-300">{storeSettings?.contact?.phone || '+91 98765 43210'}</strong>
-        </span>
-        <span className="text-gray-300">
-          Free delivery on orders above ₹{storeSettings?.delivery?.freeDeliveryMinOrder || 499}
-          {storeSettings?.delivery?.sameDayDelivery && ' • Same-day delivery available'}
-        </span>
-      </div>
+    <header
+      className={`
+        sticky top-0 z-[100] transition-all duration-300 border-b
+        ${scrolled ? "nav-scrolled py-2" : "bg-white py-4 border-gray-100"}
+      `}
+    >
+      <div className="container-custom flex items-center justify-between h-10">
+        {/* Logo Section */}
+        <Link
+          to="/"
+          id="nav-logo"
+          className="flex items-center gap-3 active:scale-95 transition-transform"
+        >
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-forest flex items-center justify-center shadow-green group-hover:rotate-6 transition-all">
+            <Leaf size={20} className="text-white" />
+          </div>
+          <div className="hidden sm:block leading-tight">
+            <h1 className="text-lg font-black font-display text-forest tracking-tighter">
+              {storeSettings?.identity?.name || STORE_NAME}
+            </h1>
+            <p className="text-[10px] text-accent font-bold uppercase tracking-widest">
+              {storeSettings?.identity?.tagline || 'Nature\'s Purest'}
+            </p>
+          </div>
+        </Link>
 
-      {/* Main navbar */}
-      <header
-        className={`
-          sticky top-0 z-50 transition-all duration-300 bg-white border-b border-gray-100 font-sans
-          ${scrolled ? "shadow-md py-3" : "py-4"}
-        `}
-      >
-        <div className="relative max-w-7xl mx-auto px-6 flex items-center h-10">
-          {/* Logo */}
-          <Link
-            to="/"
-            id="nav-logo"
-            className="flex items-center gap-2 flex-shrink-0 group"
-          >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-600 to-forest flex items-center justify-center shadow-green group-hover:scale-105 transition-transform duration-200">
-              <Leaf size={18} className="text-white" />
-            </div>
-            <div className="leading-tight">
-              <p className="text-[14px] font-black font-display text-forest tracking-tight">
-                {storeSettings?.identity?.name || 'Grocery Store'}
-              </p>
-              <p className="text-[9px] text-saffron-500 font-bold uppercase tracking-[0.2em]">
-                {storeSettings?.identity?.tagline || 'Fresh & Pure'}
-              </p>
-            </div>
-          </Link>
-
-          {/* Desktop Nav — absolutely centered */}
-          <nav className="hidden lg:flex items-center gap-7 absolute left-1/2 -translate-x-1/2">
+        {/* Desktop Navigation Link - Hidden on Mobile */}
+        {!isMobile && (
+          <nav className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                id={`nav-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
                 className={`
-                  relative text-sm font-semibold transition-all duration-200 hover-underline pb-1
-                  ${
-                    location.pathname === link.path
-                      ? "text-primary font-bold after:w-full"
-                      : "text-gray-600 hover:text-primary"
-                  }
+                  text-sm font-bold transition-all relative py-1
+                  ${location.pathname === link.path ? "text-primary" : "text-gray-500 hover:text-primary"}
                 `}
               >
                 {link.label}
-                {link.isNew && (
-                  <span className="absolute -top-3 -right-2 bg-accent text-[8px] text-white px-1.5 py-0.5 rounded-full font-black animate-pulse shadow-sm">
-                    NEW
-                  </span>
+                {location.pathname === link.path && (
+                  <motion.div layoutId="nav-pill" className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary rounded-full" />
                 )}
               </Link>
             ))}
           </nav>
+        )}
 
-          {/* Right actions */}
-          <div className="flex items-center gap-2 ml-auto flex-shrink-0">
-            {/* Desktop search bar */}
-            <div ref={searchContainerRef} className="hidden md:flex flex-col relative z-50">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-200 text-gray-500 hover:border-primary-400 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100 bg-gray-50 focus-within:bg-white transition-all duration-200">
-                <SearchIcon />
+        {/* Desktop/Mobile Common Actions */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Desktop Search */}
+          {!isMobile && (
+            <div ref={searchContainerRef} className="relative hidden md:block">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-gray-50 border border-gray-100 focus-within:bg-white focus-within:border-primary/30 transition-all w-64">
+                <SearchIcon size={18} className="text-gray-400" />
                 <input
                   type="text"
                   value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setShowSuggestions(true);
-                  }}
-                  onFocus={() => setShowSuggestions(true)}
+                  onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleSearchSubmit}
-                  placeholder="Search harvest…"
-                  className="text-xs font-semibold text-gray-700 placeholder-gray-400 outline-none w-32 bg-transparent"
+                  placeholder="Search products..."
+                  className="bg-transparent outline-none text-xs font-bold text-gray-700 w-full"
                 />
               </div>
-
-              {/* Suggestions Dropdown Desktop */}
-              {showSuggestions && query.trim() !== '' && (
-                <div className="absolute top-12 right-0 w-64 bg-white border border-gray-100 shadow-2xl rounded-2xl overflow-hidden py-2 animate-fade-in">
-                  {suggestions.length > 0 ? (
-                    suggestions.map(item => (
+              
+              {/* Desktop Suggestions */}
+              <AnimatePresence>
+                {showSuggestions && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    className="absolute top-12 left-0 right-0 bg-white border border-gray-100 shadow-2xl rounded-2xl overflow-hidden py-2"
+                  >
+                    {suggestions.map(item => (
                       <div 
                         key={item.id} 
-                        onClick={() => navigate(`/product/${item.id}`)}
+                        onClick={() => { navigate(`/product/${item.id}`); setShowSuggestions(false); }}
                         className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors"
                       >
-                        <img src={item.image} alt="" className="w-8 h-8 rounded-md object-cover bg-gray-100" />
-                        <div>
-                          <p className="text-xs font-bold text-dark truncate whitespace-nowrap overflow-hidden max-w-[150px]">{item.name}</p>
-                          <p className="text-[10px] font-semibold text-gray-400">{item.weight}</p>
+                        <img src={item.image} alt="" className="w-8 h-8 rounded-lg object-cover bg-gray-100" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-dark truncate">{item.name}</p>
+                          <p className="text-[10px] text-gray-400">{item.weight}</p>
                         </div>
-                        <p className="ml-auto text-xs font-bold text-primary">₹{item.price}</p>
+                        <p className="text-xs font-bold text-primary">₹{item.price}</p>
                       </div>
-                    ))
-                  ) : (
-                    <div className="px-4 py-3 text-xs font-medium text-gray-500 text-center">No products found.</div>
-                  )}
-                </div>
-              )}
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
+          )}
 
-            {/* Cart */}
-            <Link
-              to="/cart"
-              id="nav-cart"
-              className="relative p-2.5 rounded-full hover:bg-primary-50 text-gray-600 hover:text-primary-700 transition-all duration-200"
-              aria-label="Cart"
+          {/* Cart Icon - Visible on Desktop only (Mobile has it in bottom nav) */}
+          {!isMobile && (
+            <button
+              onClick={handleCartClick}
+              className="relative p-2.5 rounded-full hover:bg-gray-50 text-gray-700 transition-all hover:scale-110"
             >
               <CartIcon />
-              {totalItems > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-saffron-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-bounce-on-add">
+              {totalItems > 0 && isUserAuthenticated && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-accent text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce">
                   {totalItems}
                 </span>
               )}
-            </Link>
-
-            {/* WhatsApp CTA — desktop only */}
-            <button
-              id="nav-whatsapp"
-              onClick={handleCheckoutClick}
-              className="hidden lg:flex items-center gap-2 bg-accent hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl shadow-soft hover:scale-105 transition-all text-sm font-bold active:scale-95"
-            >
-              <WhatsAppIcon />
-              Order on WhatsApp
             </button>
+          )}
 
-            {/* Mobile: search toggle */}
-            <button
-              className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-all"
-              onClick={() => setSearchOpen((o) => !o)}
-              aria-label="Search"
-            >
-              {searchOpen ? <CloseIcon /> : <SearchIcon />}
-            </button>
-
-            {/* Mobile: animated hamburger */}
-            <button
-              id="mobile-menu-toggle"
-              onClick={() => setMenuOpen((o) => !o)}
-              className="lg:hidden flex flex-col justify-center items-center gap-[5px] w-9 h-9 rounded-lg hover:bg-gray-100 transition-all"
-              aria-label="Toggle menu"
-            >
-              <span
-                className={`block h-0.5 w-5 bg-gray-700 rounded transition-all duration-300 origin-center
-                  ${menuOpen ? "rotate-45 translate-y-[7px]" : ""}`}
-              />
-              <span
-                className={`block h-0.5 w-5 bg-gray-700 rounded transition-all duration-300
-                  ${menuOpen ? "opacity-0 scale-x-0" : ""}`}
-              />
-              <span
-                className={`block h-0.5 w-5 bg-gray-700 rounded transition-all duration-300 origin-center
-                  ${menuOpen ? "-rotate-45 -translate-y-[7px]" : ""}`}
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile slide-down search bar */}
-        <div
-          className={`
-            md:hidden overflow-hidden transition-all duration-300 relative bg-gray-50
-            ${searchOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"}
-          `}
-        >
-          <div className="flex items-center gap-3 px-6 py-3 border-t border-b border-gray-200">
-            <SearchIcon />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleSearchSubmit}
-              autoFocus={searchOpen}
-              placeholder="Search for rice, dal, masala…"
-              className="flex-1 text-sm font-semibold text-gray-700 placeholder-gray-400 outline-none bg-transparent"
-            />
-          </div>
-          {/* Mobile suggestions */}
-          {query.trim() !== '' && (
-            <div className="px-2 py-2 max-h-[200px] overflow-y-auto">
-              {suggestions.length > 0 ? (
-                    suggestions.map(item => (
-                      <div 
-                        key={item.id} 
-                        onClick={() => navigate(`/product/${item.id}`)}
-                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-white rounded-xl cursor-pointer transition-colors"
-                      >
-                        <img src={item.image} alt="" className="w-10 h-10 rounded-md object-cover bg-gray-100" />
-                        <div>
-                          <p className="text-sm font-bold text-dark truncate whitespace-nowrap overflow-hidden max-w-[200px]">{item.name}</p>
-                          <p className="text-xs font-semibold text-gray-400">{item.weight}</p>
-                        </div>
-                        <p className="ml-auto text-sm font-bold text-primary">₹{item.price}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="px-4 py-6 text-sm font-medium text-gray-500 text-center">No products found for '{query}'</div>
-                  )}
+          {/* User Profile / Login (Desktop) */}
+          {!isMobile && (
+            <div className="hidden sm:block">
+              {isUserAuthenticated ? (
+                <div className="flex items-center gap-3 pl-4 border-l border-gray-100">
+                  <div className="text-right hidden xl:block">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Welcome</p>
+                    <p className="text-xs font-bold text-forest">{currentUser.name.split(' ')[0]}</p>
+                  </div>
+                  <button 
+                    onClick={logoutUser}
+                    className="w-10 h-10 rounded-2xl bg-forest/5 text-forest flex items-center justify-center hover:bg-forest hover:text-white transition-all"
+                  >
+                    <User size={18} />
+                  </button>
+                </div>
+              ) : (
+                <Link to="/userlogin" className="btn-secondary py-2.5 px-6 border-forest/20">
+                  Login
+                </Link>
+              )}
             </div>
           )}
+
+          {/* Search Toggle (Mobile Only) */}
+          {isMobile && (
+            <button
+              onClick={() => setSearchOpen(!searchOpen)}
+              className="p-2.5 rounded-2xl bg-gray-50 text-gray-700 active:scale-90 transition-all"
+            >
+              {searchOpen ? <CloseIcon size={20} /> : <SearchIcon size={20} />}
+            </button>
+          )}
+
+          {/* Mobile Profile Toggle */}
+          {isMobile && (
+            <Link 
+              to={isUserAuthenticated ? "#" : "/userlogin"} 
+              onClick={isUserAuthenticated ? logoutUser : null}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${isUserAuthenticated ? 'bg-forest text-white' : 'bg-gray-50 text-gray-600'}`}
+            >
+              <User size={20} />
+            </Link>
+          )}
+
+          {/* Desktop WhatsApp CTA */}
+          {!isMobile && (
+            <button
+              onClick={() => orderViaWhatsApp()}
+              className="btn-primary"
+            >
+              <WhatsAppIcon />
+              WhatsApp
+            </button>
+          )}
         </div>
-      </header>
-
-      {/* Mobile drawer */}
-      <div
-        className={`
-          fixed top-0 right-0 h-full w-72 bg-white z-50 shadow-2xl font-sans
-          flex flex-col pt-6 pb-8 px-6 gap-2
-          transition-transform duration-300 ease-in-out
-          ${menuOpen ? "translate-x-0" : "translate-x-full"}
-        `}
-      >
-        <ul className="flex flex-col gap-1 mt-4">
-          {navLinks.map((link) => (
-            <li key={link.path}>
-              <Link
-                to={link.path}
-                className={`
-                  block px-4 py-3 rounded-xl text-sm font-bold transition-colors
-                  ${
-                    location.pathname === link.path
-                      ? "bg-primary-50 text-primary-700"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }
-                `}
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        <button
-          onClick={handleCheckoutClick}
-          className="mt-4 w-full flex items-center justify-center gap-2 bg-accent text-white px-5 py-3 rounded-xl shadow-soft text-sm font-bold active:scale-95 transition-all"
-        >
-          <WhatsAppIcon />
-          Order on WhatsApp
-        </button>
       </div>
 
-      {/* Backdrop overlay */}
-      {menuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-          onClick={() => setMenuOpen(false)}
-        />
-      )}
-    </>
+      {/* Mobile Search Overlay */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden bg-white border-t border-gray-50"
+          >
+            <div className="px-5 py-4">
+              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-gray-50 border border-gray-100">
+                <SearchIcon size={18} />
+                <input
+                  type="text"
+                  autoFocus
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleSearchSubmit}
+                  placeholder="What are you looking for?"
+                  className="bg-transparent outline-none text-sm font-bold text-gray-700 w-full"
+                />
+              </div>
+              {/* Mobile suggestions */}
+              {suggestions.length > 0 && query.trim() !== '' && (
+                <div className="mt-4 space-y-3">
+                  {suggestions.map(item => (
+                    <div 
+                      key={item.id} 
+                      onClick={() => { navigate(`/product/${item.id}`); setSearchOpen(false); }}
+                      className="flex items-center gap-4 p-2 bg-gray-50/50 rounded-2xl"
+                    >
+                      <img src={item.image} alt="" className="w-12 h-12 rounded-xl object-cover" />
+                      <div>
+                        <p className="text-sm font-bold text-dark">{item.name}</p>
+                        <p className="text-xs text-gray-400">{item.weight} • ₹{item.price}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
   );
 };
 

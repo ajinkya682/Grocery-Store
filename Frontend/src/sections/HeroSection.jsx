@@ -20,97 +20,93 @@ const HeroSection = () => {
   return (
     <section
       id="hero"
-      className="relative min-h-[90vh] flex items-center overflow-hidden bg-white pt-20"
+      className="relative min-h-[85vh] lg:min-h-[90vh] flex items-center overflow-hidden bg-white pt-8 lg:pt-20"
     >
       {/* Background Gradient & Pattern */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
+      <div className="absolute top-0 right-0 w-full lg:w-1/2 h-full bg-gradient-to-b lg:bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
       <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(#2a5a20_0.5px,transparent_0.5px)] [background-size:24px_24px] opacity-[0.03] pointer-events-none" />
 
-      <div className="container-custom relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* Left Content */}
+      <div className="container-custom relative z-10 w-full">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          {/* Content */}
           <motion.div
             initial="hidden"
             whileInView="show"
             viewport={{ once: true }}
-            transition={{ staggerChildren: 0.15 }}
-            className="flex flex-col items-start"
+            transition={{ staggerChildren: 0.1 }}
+            className="flex flex-col items-center lg:items-start text-center lg:text-left pt-10 lg:pt-0"
           >
             <motion.div
               variants={fadeUp}
-              className="inline-flex items-center gap-2 bg-primary-50 border border-primary-100 text-primary text-xs font-black uppercase tracking-widest px-4 py-2 rounded-full mb-6"
+              className="inline-flex items-center gap-2 bg-primary-50 border border-primary-100 text-primary text-[10px] sm:text-xs font-black uppercase tracking-widest px-4 py-2 rounded-full mb-6"
             >
               <Star size={14} className="fill-primary" />
-              Trusted by 500+ local customers
+              Trusted by 5,000+ happy families
             </motion.div>
 
             <motion.h1
               variants={fadeUp}
-              className="text-4xl md:text-5xl lg:text-7xl font-display font-black text-forest leading-tight mb-6"
+              className="text-[2.5rem] sm:text-[3.5rem] lg:text-[5rem] font-display font-black text-forest leading-[1.1] mb-6"
             >
               Fresh Groceries <br />
-              <span className="text-secondary">Delivered</span> to Your <br />
-              Doorstep
+              <span className="text-accent underline decoration-forest/10 decoration-wavy">Delivered</span> to Your <br className="hidden sm:block" />
+              Kitchen
             </motion.h1>
 
             <motion.p
               variants={fadeUp}
-              className="text-gray-600 text-lg md:text-xl leading-relaxed mb-10 max-w-lg font-medium"
+              className="text-gray-600 text-base sm:text-lg lg:text-xl leading-relaxed mb-8 lg:mb-10 max-w-lg font-medium px-4 lg:px-0"
             >
-              Premium quality products, handpicked daily, delivered fast and
-              safely. Experience the heritage of local flavors at home.
+              Premium quality products, handpicked from the farm, delivered at lighting speed. Freshness you can taste, quality you can trust.
             </motion.p>
 
             <motion.div
               variants={fadeUp}
-              className="flex flex-wrap gap-4 w-full sm:w-auto"
+              className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-4 lg:px-0"
             >
               <a
                 href="#featured-products"
                 id="hero-shop-now"
-                className="btn-primary group ripple text-base px-8 py-4 shadow-xl hover:shadow-accent/20"
+                className="btn-primary w-full sm:w-auto px-10 py-5 text-base shadow-2xl"
               >
-                Shop Now
+                Start Shopping
                 <ShoppingBag
-                  size={18}
+                  size={20}
                   className="group-hover:translate-x-1 transition-transform"
                 />
               </a>
 
               <button
                 id="hero-whatsapp-direct"
-                onClick={orderViaWhatsApp}
-                className="btn-whatsapp px-8 py-4 text-base shadow-xl hover:shadow-green-500/20 group"
+                onClick={() => orderViaWhatsApp()}
+                className="btn-secondary w-full sm:w-auto px-10 py-5 text-base border-primary/20 text-primary hover:bg-primary hover:text-white"
               >
-                <Phone
-                  size={18}
-                  className="group-hover:rotate-12 transition-transform"
-                />
-                Order on WhatsApp
+                <Phone size={20} />
+                WhatsApp Order
               </button>
             </motion.div>
 
             {/* Trust Badges */}
             <motion.div
               variants={fadeUp}
-              className="flex flex-wrap items-center gap-6 mt-12 pt-8 border-t border-gray-100"
+              className="flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-8 mt-10 lg:mt-12 pt-8 border-t border-gray-100 w-full sm:w-auto"
             >
-              <div className="flex items-center gap-2">
-                <CheckCircle2 size={18} className="text-secondary" />
-                <span className="text-sm font-bold text-gray-700">
-                  100% Fresh
+              <div className="flex items-center gap-2 text-primary/70">
+                <CheckCircle2 size={16} />
+                <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest">
+                  100% Organic
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 size={18} className="text-secondary" />
-                <span className="text-sm font-bold text-gray-700">
-                  Fast Delivery
+              <div className="flex items-center gap-2 text-primary/70">
+                <CheckCircle2 size={16} />
+                <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest">
+                  Same-Day Delivery
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 size={18} className="text-secondary" />
-                <span className="text-sm font-bold text-gray-700">
-                  Best Prices
+              <div className="flex items-center gap-2 text-primary/70">
+                <CheckCircle2 size={16} />
+                <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest">
+                  No Min. Order
                 </span>
               </div>
             </motion.div>

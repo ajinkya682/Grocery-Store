@@ -1,7 +1,9 @@
 // src/pages/OurMasalas.jsx
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useProduct } from "../context/ProductContext";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
 import {
   Check,
@@ -22,7 +24,11 @@ const fadeUp = {
 
 const OurMasalas = () => {
   const { products } = useProduct();
-  const { addItem, orderViaWhatsApp } = useCart();
+  const { addItem, orderViaWhatsApp, openCart } = useCart();
+  const { isUserAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [selectedWeight, setSelectedWeight] = useState("250 g");
   const [activeProduct, setActiveProduct] = useState(null);
   const [isAdded, setIsAdded] = useState(false);
@@ -37,11 +43,27 @@ const OurMasalas = () => {
   }, [selectedWeight, products]);
 
   const handleAddToCart = () => {
-    if (activeProduct) {
-      addItem(activeProduct);
-      setIsAdded(true);
-      setTimeout(() => setIsAdded(false), 2000);
+    if (!isUserAuthenticated) {
+      navigate('/userlogin', { state: { from: location.pathname } });
+      return;
     }
+
+    if (activeProduct) {
+      const success = addItem(activeProduct);
+      if (success) {
+        setIsAdded(true);
+        setTimeout(() => setIsAdded(false), 2000);
+        openCart();
+      }
+    }
+  };
+
+  const handleWhatsAppOrder = () => {
+    if (!isUserAuthenticated) {
+      navigate('/userlogin', { state: { from: location.pathname } });
+      return;
+    }
+    orderViaWhatsApp();
   };
 
   const ingredients = [
@@ -104,80 +126,83 @@ const OurMasalas = () => {
   ];
 
   return (
-    <div className="animate-page">
+    <div className="animate-page pb-12 lg:pb-0">
       {/* 1. Page Hero */}
-      <section className="relative min-h-[70vh] flex items-center bg-forest overflow-hidden py-24">
-        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')]" />
-        <div className="container-custom relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <motion.div
-            initial="hidden"
-            animate="show"
-            transition={{ staggerChildren: 0.2 }}
-          >
-            <motion.span
-              variants={fadeUp}
-              className="inline-block bg-accent text-white text-[10px] font-black uppercase tracking-[0.3em] px-4 py-2 rounded-full mb-6 shadow-xl"
+      <section className="relative min-h-[70vh] flex items-center bg-primary overflow-hidden py-16 lg:py-24">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]" />
+        
+        <div className="container-custom relative z-10">
+          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+            {/* Content Left */}
+            <motion.div
+              initial="hidden"
+              animate="show"
+              transition={{ staggerChildren: 0.1 }}
+              className="text-center lg:text-left pt-10 lg:pt-0"
             >
-              Flagship Collection
-            </motion.span>
-            <motion.h1
-              variants={fadeUp}
-              className="text-4xl md:text-6xl lg:text-7xl font-display font-black text-white leading-tight mb-6"
-            >
-              Authentic <br />
-              <span className="text-accent underline decoration-white/20 underline-offset-8">
-                Kolhapuri
-              </span>{" "}
-              <br />
-              Masala
-            </motion.h1>
-            <motion.p
-              variants={fadeUp}
-              className="text-gray-300 text-lg md:text-xl leading-relaxed max-w-lg mb-10 font-medium"
-            >
-              Spice crafted with tradition, delivering rich and bold flavors.
-              Hand-pounded to preserve essential oils and heritage taste.
-            </motion.p>
-            <motion.div variants={fadeUp} className="flex gap-4">
-              <button
-                onClick={() =>
-                  document
-                    .getElementById("product-section")
-                    .scrollIntoView({ behavior: "smooth" })
-                }
-                className="btn-primary ripple px-8"
+              <motion.span
+                variants={fadeUp}
+                className="inline-block bg-accent/20 border border-accent/30 text-accent text-[10px] font-black uppercase tracking-[0.4em] px-4 py-2 rounded-xl mb-6 shadow-2xl"
               >
-                Order Now <ArrowRight size={18} />
-              </button>
+                Heritage Collection
+              </motion.span>
+              <motion.h1
+                variants={fadeUp}
+                className="text-[2.5rem] sm:text-[4rem] lg:text-[6rem] font-display font-black text-white leading-[1] mb-6"
+              >
+                The Original <br />
+                <span className="text-accent italic">Kolhapuri</span> <br />
+                Soul
+              </motion.h1>
+              <motion.p
+                variants={fadeUp}
+                className="text-gray-300 text-sm sm:text-lg lg:text-xl leading-relaxed max-w-lg mb-10 font-medium mx-auto lg:mx-0"
+              >
+                Crafted with tradition, hand-pounded for purity. Our signature masala brings the authentic heat of Kolhapur to your table.
+              </motion.p>
+              <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 px-4 sm:px-0">
+                <button
+                  onClick={() =>
+                    document
+                      .getElementById("product-section")
+                      .scrollIntoView({ behavior: "smooth" })
+                  }
+                  className="btn-primary py-5 px-10 text-base"
+                >
+                  Get Your Jar <ArrowRight size={20} />
+                </button>
+              </motion.div>
             </motion.div>
-          </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1 }}
-            className="relative"
-          >
-            <div className="relative rounded-[3rem] overflow-hidden border-8 border-white/10 shadow-3xl aspect-[4/5] md:aspect-square">
-              <LazyImage
-                src="https://www.nairutivyutpadan.com/cdn/shop/files/kolhapuri_3.png?v=1768402032&width=1000"
-                alt="Authentic Kolhapuri Masala"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            {/* Decorative labels */}
-            <div
-              className="absolute -bottom-6 -right-6 bg-white p-6 rounded-3xl shadow-2xl border border-gray-100 hidden md:block"
-              style={{ animation: "float 4s ease-in-out infinite" }}
+            {/* Visual Right */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1 }}
+              className="relative w-full aspect-square sm:aspect-video lg:aspect-square flex items-center justify-center p-4 lg:p-0"
             >
-              <p className="text-xs font-black text-gray-400 uppercase mb-1">
-                Recipe From
-              </p>
-              <p className="text-xl font-black text-forest tracking-tighter">
-                1984 Heritage
-              </p>
-            </div>
-          </motion.div>
+              <div className="relative w-full h-full max-w-[500px] rounded-[3rem] overflow-hidden border-[10px] border-white/5 shadow-3xl bg-white/5 backdrop-blur-sm relative group">
+                <LazyImage
+                  src="https://www.nairutivyutpadan.com/cdn/shop/files/kolhapuri_3.png?v=1768402032&width=1000"
+                  alt="Authentic Kolhapuri Masala"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent pointer-events-none" />
+              </div>
+              
+              {/* Floating Badge */}
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -bottom-4 -right-2 sm:-bottom-8 sm:-right-8 bg-white p-4 sm:p-6 rounded-[2rem] shadow-2xl border border-gray-100 hidden sm:block"
+              >
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-accent uppercase tracking-widest mb-1">Authenticity</span>
+                  <span className="text-xl font-black text-forest">Verified Recipe</span>
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
@@ -261,14 +286,16 @@ const OurMasalas = () => {
                     ₹{activeProduct?.price}
                   </p>
                 </div>
-                <div className="bg-secondary/10 text-secondary px-4 py-2 rounded-xl text-xs font-black">
-                  {Math.round(
-                    ((activeProduct?.originalPrice - activeProduct?.price) /
-                      activeProduct?.originalPrice) *
-                      100,
-                  )}
-                  % OFF
-                </div>
+                {activeProduct?.originalPrice > activeProduct?.price && (
+                  <div className="bg-secondary/10 text-secondary px-4 py-2 rounded-xl text-xs font-black">
+                    {Math.round(
+                      ((activeProduct.originalPrice - activeProduct.price) /
+                        activeProduct.originalPrice) *
+                        100,
+                    )}
+                    % OFF
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -289,7 +316,7 @@ const OurMasalas = () => {
                   )}
                 </button>
                 <button
-                  onClick={orderViaWhatsApp}
+                  onClick={handleWhatsAppOrder}
                   className="flex-1 btn-whatsapp py-5 rounded-2xl shadow-xl"
                 >
                   <Phone size={20} /> WhatsApp

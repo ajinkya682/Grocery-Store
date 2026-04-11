@@ -1,101 +1,265 @@
 // src/pages/admin/ManageSettings.jsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
-import { Save } from 'lucide-react';
+import { 
+  Store, 
+  MapPin, 
+  Phone, 
+  Globe, 
+  Clock, 
+  Shield, 
+  Bell, 
+  Save, 
+  Check, 
+  Camera,
+  MessageSquare,
+  Key,
+  Database
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+
+const SettingSection = ({ title, description, children }) => (
+  <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 py-12 border-b border-slate-100 last:border-0">
+    <div className="lg:col-span-4 max-w-sm">
+      <h3 className="text-lg font-black text-slate-900 mb-2">{title}</h3>
+      <p className="text-sm font-bold text-slate-400 leading-relaxed">{description}</p>
+    </div>
+    <div className="lg:col-span-8 bg-white p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 shadow-saas">
+      <div className="space-y-8">
+         {children}
+      </div>
+    </div>
+  </div>
+);
+
+const InputGroup = ({ label, icon: Icon, value, onChange, placeholder, type = "text" }) => (
+  <div className="space-y-3">
+    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{label}</label>
+    <div className="relative">
+      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300">
+        <Icon size={18} />
+      </div>
+      <input 
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-sm text-slate-700 outline-none focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/5 transition-all"
+      />
+    </div>
+  </div>
+);
+
+const ToggleGroup = ({ label, description, checked, onChange }) => (
+  <div className="flex items-center justify-between p-6 bg-slate-50 rounded-[1.5rem] border border-slate-100">
+    <div>
+      <p className="text-sm font-black text-slate-900">{label}</p>
+      <p className="text-xs font-bold text-slate-400">{description}</p>
+    </div>
+    <button 
+      onClick={() => onChange(!checked)}
+      className={`relative w-14 h-8 rounded-full transition-all flex items-center px-1 ${checked ? 'bg-primary shadow-lg shadow-primary/20' : 'bg-slate-200'}`}
+    >
+      <motion.div 
+        animate={{ x: checked ? 24 : 0 }}
+        className="w-6 h-6 bg-white rounded-full shadow-sm"
+      />
+    </button>
+  </div>
+);
 
 const ManageSettings = () => {
-  const { storeSettings, updateSettings, loading } = useStore();
-  const [form, setForm] = useState(null);
+  const { storeSettings, updateStoreSettings } = useStore();
+  const [form, setForm] = useState(storeSettings || {
+    identity: { name: '', email: '', website: '', logo: '' },
+    operations: { currency: '₹', timezone: 'IST', deliveryCharge: 0 },
+    notifications: { emailAlerts: true, orderAlerts: true },
+    integrations: { whatsappNumber: '', whatsappApiKey: '' }
+  });
   const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (storeSettings) setForm(storeSettings);
-  }, [storeSettings]);
-
-  if (loading || !form) return <div className="animate-pulse bg-gray-200 h-96 rounded-2xl w-full"></div>;
-
-  const handleChange = (section, field, value) => {
-    setForm(prev => ({
-      ...prev,
-      [section]: { ...prev[section], [field]: value }
-    }));
-  };
-
-  const handleSave = async (e) => {
-    e.preventDefault();
+  const handleSave = async () => {
     setSaving(true);
-    await updateSettings(form);
-    setTimeout(() => {
-      setSaving(false);
-      alert('Settings saved successfully!');
-    }, 500);
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    updateStoreSettings(form);
+    setSaving(false);
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 2000);
   };
 
   return (
-    <form onSubmit={handleSave} className="space-y-8 animate-fade-in max-w-4xl">
-      {/* Store Identity */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <h3 className="text-lg font-bold text-dark border-b border-gray-100 pb-4 mb-6">Store Identity & Display</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Store Name</label>
-            <input type="text" value={form.identity.name} onChange={e => handleChange('identity', 'name', e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:border-primary outline-none" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Tagline</label>
-            <input type="text" value={form.identity.tagline} onChange={e => handleChange('identity', 'tagline', e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:border-primary outline-none" />
-          </div>
+    <div className="max-w-5xl mx-auto animate-fade-in pb-20">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-12">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 font-display">Store Ecosystem</h1>
+          <p className="text-slate-500 font-bold text-sm mt-1">Configure your global business identity and operations.</p>
         </div>
-      </div>
-
-      {/* Contact & Hours */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <h3 className="text-lg font-bold text-dark border-b border-gray-100 pb-4 mb-6">Contact & Business Hours</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Phone Support</label>
-            <input type="text" value={form.contact.phone} onChange={e => handleChange('contact', 'phone', e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:border-primary outline-none" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">WhatsApp (Digits only)</label>
-            <input type="text" value={form.contact.whatsapp} onChange={e => handleChange('contact', 'whatsapp', e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:border-primary outline-none" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Email Address</label>
-            <input type="email" value={form.contact.email} onChange={e => handleChange('contact', 'email', e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:border-primary outline-none" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Weekday Hours</label>
-            <input type="text" value={form.businessHours.weekdays} onChange={e => handleChange('businessHours', 'weekdays', e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:border-primary outline-none" />
-          </div>
-        </div>
-      </div>
-
-      {/* Delivery Logic */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <h3 className="text-lg font-bold text-dark border-b border-gray-100 pb-4 mb-6">Delivery Logic</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Free Delivery Radius (km)</label>
-            <input type="number" value={form.delivery.freeRadiusKm} onChange={e => handleChange('delivery', 'freeRadiusKm', parseInt(e.target.value))} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:border-primary outline-none" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Min Order for Free Delivery (₹)</label>
-            <input type="number" value={form.delivery.freeDeliveryMinOrder} onChange={e => handleChange('delivery', 'freeDeliveryMinOrder', parseInt(e.target.value))} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:border-primary outline-none" />
-          </div>
-          <div className="flex items-center gap-3 pt-8">
-            <input type="checkbox" id="sameDay" checked={form.delivery.sameDayDelivery} onChange={e => handleChange('delivery', 'sameDayDelivery', e.target.checked)} className="w-5 h-5 accent-primary" />
-            <label htmlFor="sameDay" className="text-sm font-semibold text-gray-700">Offer Same-Day Delivery</label>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex justify-end">
-        <button type="submit" disabled={saving} className="bg-primary hover:bg-forest text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md">
-          {saving ? 'Saving...' : <><Save size={18} /> Save Settings</>}
+        <button 
+          onClick={handleSave}
+          disabled={saving}
+          className={`flex items-center justify-center gap-2 px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 ${
+            success ? 'bg-green-500 text-white shadow-lg' : 'bg-primary text-white shadow-xl shadow-primary/10 hover:bg-forest'
+          }`}
+        >
+          {saving ? 'Synchronizing...' : success ? <><Check size={18} /> Settings Applied</> : <><Save size={18} /> Commit Changes</>}
         </button>
       </div>
-    </form>
+
+      <div className="space-y-4">
+        {/* Section 1: Identity */}
+        <SettingSection 
+          title="Store Identity" 
+          description="Basic public information about your business. This appears on invoices and the website header."
+        >
+          <div className="flex flex-col sm:flex-row gap-8 items-center pb-4">
+             <div className="relative group">
+                <div className="w-24 h-24 rounded-[2rem] bg-slate-100 flex items-center justify-center text-slate-300 border-2 border-dashed border-slate-200 overflow-hidden">
+                   {form.identity?.logo ? <img src={form.identity.logo} className="w-full h-full object-cover" alt="" /> : <Camera size={32} />}
+                </div>
+                <button className="absolute -bottom-2 -right-2 bg-white p-2.5 rounded-xl shadow-xl border border-slate-100 text-slate-500 hover:text-primary transition-all">
+                   <Camera size={16} />
+                </button>
+             </div>
+             <div className="flex-1 space-y-2 text-center sm:text-left">
+                <p className="text-sm font-black text-slate-900">Brand Representation</p>
+                <p className="text-xs font-bold text-slate-400">Resolution: 512x512px (PNG/WebP Recommended)</p>
+             </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <InputGroup 
+              label="Legal Store Name" 
+              icon={Store} 
+              value={form.identity?.name} 
+              onChange={(e) => setForm({...form, identity: {...form.identity, name: e.target.value}})}
+              placeholder="e.g. Heritage Organics" 
+            />
+            <InputGroup 
+              label="Contact Email" 
+              icon={Globe} 
+              value={form.identity?.email} 
+              onChange={(e) => setForm({...form, identity: {...form.identity, email: e.target.value}})}
+              placeholder="hello@store.com" 
+              type="email"
+            />
+            <InputGroup 
+              label="Business WhatsApp" 
+              icon={Phone} 
+              value={form.integrations?.whatsappNumber} 
+              onChange={(e) => setForm({...form, integrations: {...form.integrations, whatsappNumber: e.target.value}})}
+              placeholder="+91 00000 00000" 
+            />
+            <InputGroup 
+              label="Store Website" 
+              icon={Globe} 
+              value={form.identity?.website} 
+              onChange={(e) => setForm({...form, identity: {...form.identity, website: e.target.value}})}
+              placeholder="www.yourstore.com" 
+            />
+          </div>
+        </SettingSection>
+
+        {/* Section 2: Operations */}
+        <SettingSection 
+          title="Operational Logic" 
+          description="Manage how your store handles currency, delivery fees, and timezones."
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <InputGroup 
+              label="Currency Symbol" 
+              icon={Store} 
+              value={form.operations?.currency} 
+              onChange={(e) => setForm({...form, operations: {...form.operations, currency: e.target.value}})}
+              placeholder="₹" 
+            />
+             <InputGroup 
+              label="Flat Delivery Charge" 
+              icon={MapPin} 
+              value={form.operations?.deliveryCharge} 
+              onChange={(e) => setForm({...form, operations: {...form.operations, deliveryCharge: Number(e.target.value)}})}
+              placeholder="0" 
+              type="number"
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+             <ToggleGroup 
+               label="Accept Orders Mode" 
+               description="Turning this off will prevent items from being added to the cart."
+               checked={true}
+               onChange={() => {}}
+             />
+             <ToggleGroup 
+               label="Display Out of Stock" 
+               description="Show products that have 0 inventory units in the catalog."
+               checked={true}
+               onChange={() => {}}
+             />
+          </div>
+        </SettingSection>
+
+        {/* Section 3: WhatsApp Integration */}
+        <SettingSection 
+          title="API & Automation" 
+          description="Supercharge your workflow by connecting automated WhatsApp triggers."
+        >
+          <div className="space-y-6">
+             <div className="bg-slate-950 p-8 rounded-[2rem] text-white flex flex-col sm:flex-row items-center gap-6 border border-slate-800">
+                <div className="w-16 h-16 rounded-2xl bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/20">
+                   <MessageSquare size={32} />
+                </div>
+                <div className="flex-1 text-center sm:text-left">
+                   <p className="text-base font-black">Official Cloud API Status</p>
+                   <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Pending Setup</p>
+                </div>
+                <button className="px-6 py-3 bg-white text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all">
+                   Authenticate
+                </button>
+             </div>
+             
+             <div className="grid grid-cols-1 gap-6">
+                <InputGroup 
+                  label="API Endpoint Key" 
+                  icon={Key} 
+                  value={form.integrations?.whatsappApiKey} 
+                  onChange={(e) => setForm({...form, integrations: {...form.integrations, whatsappApiKey: e.target.value}})}
+                  placeholder="Bearer xxxxxxxxxxxxxxxxxxxx" 
+                  type="password"
+                />
+             </div>
+          </div>
+        </SettingSection>
+
+        {/* Section 4: Maintenance */}
+        <SettingSection 
+          title="System Maintenance" 
+          description="Manage your data backups and administrative security."
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center sm:text-left">
+             <button className="p-6 bg-slate-50 border border-slate-100 rounded-[1.5rem] hover:bg-slate-100 transition-all group flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-slate-400 group-hover:text-primary transition-all">
+                   <Database size={20} />
+                </div>
+                <div>
+                   <p className="text-sm font-black text-slate-900">Export Catalog</p>
+                   <p className="text-[10px] font-bold text-slate-400">Last backup: 2h ago</p>
+                </div>
+             </button>
+             <button className="p-6 bg-slate-50 border border-slate-100 rounded-[1.5rem] hover:bg-slate-100 transition-all group flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-slate-400 group-hover:text-red-500 transition-all">
+                   <Shield size={20} />
+                </div>
+                <div>
+                   <p className="text-sm font-black text-slate-900">Admin Permissions</p>
+                   <p className="text-[10px] font-bold text-slate-400">2 Active Managers</p>
+                </div>
+             </button>
+          </div>
+        </SettingSection>
+      </div>
+    </div>
   );
 };
 

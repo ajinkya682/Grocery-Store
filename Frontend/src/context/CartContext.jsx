@@ -1,5 +1,6 @@
-// src/context/CartContext.jsx
-import { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useReducer, useEffect, useState } from 'react';
+import { useAuth } from './AuthContext';
+import { AUTH_KEYS, WHATSAPP_NUMBER } from '../config/constants';
 
 const CartContext = createContext(null);
 
@@ -40,69 +41,96 @@ const cartReducer = (state, action) => {
 };
 
 export const CartProvider = ({ children }) => {
+  const { currentUser, isUserAuthenticated } = useAuth();
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Persist to localStorage
+  // Load user-specific cart on login/start
   useEffect(() => {
-    const stored = localStorage.getItem('grocery_cart');
-    if (stored) {
-      try {
-        dispatch({ type: 'LOAD_CART', payload: JSON.parse(stored) });
-      } catch (_) {}
+    if (isUserAuthenticated && currentUser?.mobile) {
+      const allCarts = JSON.parse(localStorage.getItem(AUTH_KEYS.CARTS) || '{}');
+      const userCart = allCarts[currentUser.mobile] || [];
+      dispatch({ type: 'LOAD_CART', payload: userCart });
+    } else {
+      dispatch({ type: 'LOAD_CART', payload: [] });
     }
-  }, []);
+  }, [isUserAuthenticated, currentUser?.mobile]);
 
+  // Persist user-specific cart on changes
   useEffect(() => {
-    localStorage.setItem('grocery_cart', JSON.stringify(state.items));
-  }, [state.items]);
+    if (isUserAuthenticated && currentUser?.mobile) {
+      const allCarts = JSON.parse(localStorage.getItem(AUTH_KEYS.CARTS) || '{}');
+      allCarts[currentUser.mobile] = state.items;
+      localStorage.setItem(AUTH_KEYS.CARTS, JSON.stringify(allCarts));
+    }
+  }, [state.items, isUserAuthenticated, currentUser?.mobile]);
 
-  const addItem    = (product) => dispatch({ type: 'ADD_ITEM', payload: product });
+  const addItem = (product) => {
+    if (!isUserAuthenticated) {
+      // In a real app, we might trigger a toast here
+      return false; // Signal failure to the component
+    }
+    dispatch({ type: 'ADD_ITEM', payload: product });
+    setIsCartOpen(true);
+    return true;
+  };
+
   const removeItem = (id)      => dispatch({ type: 'REMOVE_ITEM', payload: id });
   const updateQty  = (id, qty) => dispatch({ type: 'UPDATE_QTY', payload: { id, qty } });
   const clearCart  = ()        => dispatch({ type: 'CLEAR_CART' });
 
+  const toggleCart = () => {
+    if (!isUserAuthenticated) return false;
+    setIsCartOpen(!isCartOpen);
+    return true;
+  };
+
+  const openCart = () => {
+    if (!isUserAuthenticated) return false;
+    setIsCartOpen(true);
+    return true;
+  };
+
+  const closeCart  = () => setIsCartOpen(false);
+
   const totalItems = state.items.reduce((s, i) => s + i.qty, 0);
   const totalPrice = state.items.reduce((s, i) => s + i.price * i.qty, 0);
 
-  // WhatsApp order message builder
-  const orderViaWhatsApp = (customerInfo = null) => {
-    const phone = '919876543210'; // replace with real number
-    const lines = state.items.map(
-      i => `• ${i.name} (${i.weight}) × ${i.qty} = ₹${i.price * i.qty}`
-    );
-    let msgArr = [
-      '🛒 *New Order from Grocery Store Website*',
-      '',
-    ];
+  const orderViaWhatsApp = () => {
+    if (!isUserAuthenticated || !currentUser) return;
 
-    if (customerInfo && customerInfo.name) {
-      msgArr.push(`*Customer Details:*`);
-      msgArr.push(`Name: ${customerInfo.name}`);
-      msgArr.push(`Mobile: ${customerInfo.mobile}`);
-      msgArr.push(`Address: ${customerInfo.address}`);
-      msgArr.push('');
-    }
+    const itemsList = state.items.map(
+      i => `- ${i.name} (${i.weight}) x${i.qty}`
+    ).join('\n');
 
-    msgArr.push('*Order Details:*');
-    msgArr.push(...lines);
-    msgArr.push('');
-    
-    const delivery = totalPrice >= 499 ? 0 : 40;
-    msgArr.push(`*Subtotal: ₹${totalPrice}*`);
-    if (delivery > 0) {
-      msgArr.push(`*Delivery: ₹${delivery}*`);
-    }
-    msgArr.push(`*Total Amount: ₹${totalPrice + delivery}*`);
-    msgArr.push('');
-    msgArr.push('Please confirm my order. Thank you!');
+    const message = `
+Hello, I want to place an order:
 
-    const msg = msgArr.join('\n');
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+*Customer Information:*
+Name: ${currentUser.name}
+Mobile: ${currentUser.mobile}
+Address: ${currentUser.address} - ${currentUser.pincode}
+
+*Order Details:*
+${itemsList}
+
+*Subtotal: ₹${totalPrice}*
+*Delivery: ₹${totalPrice >= 499 ? 0 : 40}*
+*Total: ₹${totalPrice + (totalPrice >= 499 ? 0 : 40)}*
+
+Please confirm my order. Thank you!
+`.trim();
+
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   return (
     <CartContext.Provider
-      value={{ items: state.items, addItem, removeItem, updateQty, clearCart, totalItems, totalPrice, orderViaWhatsApp }}
+      value={{ 
+        items: state.items, addItem, removeItem, updateQty, clearCart, 
+        totalItems, totalPrice, orderViaWhatsApp,
+        isCartOpen, setIsCartOpen, toggleCart, openCart, closeCart 
+      }}
     >
       {children}
     </CartContext.Provider>

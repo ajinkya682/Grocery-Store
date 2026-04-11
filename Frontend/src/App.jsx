@@ -8,6 +8,8 @@ import Contact from './pages/Contact';
 import SearchResults from './pages/SearchResults';
 import ProductDetails from './pages/ProductDetails';
 import OurMasalas from './pages/OurMasalas';
+import UserLogin from './pages/UserLogin';
+import AdminLogin from './pages/AdminLogin';
 
 // Admin Components
 import AdminLayout from './components/admin/AdminLayout';
@@ -15,12 +17,12 @@ import DashboardOverview from './pages/admin/DashboardOverview';
 import ManageProducts from './pages/admin/ManageProducts';
 import ManageOrders from './pages/admin/ManageOrders';
 import ManageSettings from './pages/admin/ManageSettings';
-import Login from './pages/admin/Login';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import { CartProvider } from './context/CartContext';
 import { StoreProvider } from './context/StoreContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProductProvider } from './context/ProductContext';
+import AppLayout from './components/layout/AppLayout';
 
 function App() {
   return (
@@ -30,34 +32,31 @@ function App() {
           <ProductProvider>
             <CartProvider>
               <Routes>
-            {/* Public Store Context */}
-            <Route path="/*" element={
-              <div className="flex flex-col min-h-screen">
-                <Navbar />
-                <div className="flex-grow">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/product/:id" element={<ProductDetails />} />
-                <Route path="/search" element={<SearchResults />} />
-                <Route path="/our-masalas" element={<OurMasalas />} />
-              </Routes>
-            </div>
-            <Footer />
-          </div>
-        } />
+                {/* Public Store Context wrapped in Adaptive Layout */}
+                <Route path="/*" element={
+                  <AppLayout>
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/products" element={<Products />} />
+                      <Route path="/cart" element={<Cart />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/product/:id" element={<ProductDetails />} />
+                      <Route path="/search" element={<SearchResults />} />
+                      <Route path="/our-masalas" element={<OurMasalas />} />
+                      <Route path="/userlogin" element={<UserLogin />} />
+                    </Routes>
+                  </AppLayout>
+                } />
         
-        {/* Admin Panel Context (No Navbar/Footer) */}
-        <Route path="/login" element={<Login />} />
+        {/* Admin Portal */}
+        <Route path="/adminlogin" element={<AdminLogin />} />
         
-        <Route path="/admin" element={<ProtectedRoute />}>
+        <Route path="/admin" element={<ProtectedRoute type="admin" />}>
           <Route element={<AdminLayout />}>
             <Route index element={<DashboardOverview />} />
-          <Route path="products" element={<ManageProducts />} />
-          <Route path="orders" element={<ManageOrders />} />
-          <Route path="settings" element={<ManageSettings />} />
+            <Route path="products" element={<ManageProducts />} />
+            <Route path="orders" element={<ManageOrders />} />
+            <Route path="settings" element={<ManageSettings />} />
           </Route>
         </Route>
       </Routes>

@@ -25,13 +25,13 @@ const CategoriesSection = () => {
         </div>
 
         {/* Category grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+        <div className="adaptive-grid">
           {categories.slice(0, 5).map((category, i) => (
             <Link
               key={category.id}
               to={`/products?category=${category.slug}`}
               id={`category-${category.slug}`}
-              className="reveal"
+              className="reveal h-full"
               style={{ transitionDelay: `${i * 80}ms` }}
             >
               <CategoryCard category={category} index={i} />
@@ -40,9 +40,10 @@ const CategoriesSection = () => {
         </div>
 
         {/* Mobile view all */}
-        <div className="sm:hidden mt-6 text-center">
-          <Link to="/products" className="btn-green text-sm">
-            View All Categories <ArrowRight size={15} />
+        <div className="sm:hidden mt-8">
+          <Link to="/products" className="btn-secondary w-full py-4 text-base font-black border-primary/10">
+            View All Categories
+            <ArrowRight size={18} />
           </Link>
         </div>
       </div>

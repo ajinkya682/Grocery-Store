@@ -9,11 +9,44 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease-out; /* Slightly faster for app feel */
+    -webkit-tap-highlight-color: transparent; /* Remove mobile tap highlight */
+  }
+
+  :root {
+    /* Fluid Typography System */
+    --font-size-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.8rem);
+    --font-size-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.9rem);
+    --font-size-base: clamp(0.9rem, 0.85rem + 0.25vw, 1rem);
+    --font-size-lg: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+    --font-size-xl: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+    --font-size-2xl: clamp(1.5rem, 1.35rem + 0.75vw, 2rem);
+    --font-size-3xl: clamp(2rem, 1.75rem + 1vw, 2.5rem);
+    --font-size-hero: clamp(2.5rem, 2rem + 2.5vw, 4.5rem);
+
+    /* Grid System */
+    --grid-cols: 1;
+    --grid-gap: clamp(1rem, 2vw, 2rem);
+  }
+
+  @media (min-width: 641px) { :root { --grid-cols: 2; } }
+  @media (min-width: 1025px) { :root { --grid-cols: 4; } }
+  @media (min-width: 1280px) { :root { --grid-cols: 5; } }
+
+  :root {
+    /* SaaS Admin Specific */
+    --admin-sidebar-width: 280px;
+    --admin-sidebar-collapsed: 80px;
+    --admin-bg: #f8fafc;
+    --admin-card: #ffffff;
+    --admin-border: #e2e8f0;
+    --admin-text-primary: #0f172a;
+    --admin-text-secondary: #64748b;
   }
 
   html {
     scroll-behavior: smooth;
+    overscroll-behavior-y: none; /* Prevent pull-to-refresh bounce on some browsers for app feel */
   }
 
   body {
@@ -21,141 +54,141 @@
     color: theme('colors.dark');
     @apply font-sans antialiased;
     overflow-x: hidden;
+    /* Add padding for bottom navigation on mobile */
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* Custom scrollbar */
+  /* Compact headings */
+  h1 { font-size: var(--font-size-3xl); @apply font-display font-black leading-[1.1]; }
+  h2 { font-size: var(--font-size-2xl); @apply font-display font-bold leading-tight; }
+  p { font-size: var(--font-size-base); }
+
+  /* Custom scrollbar - thinner for app feel */
   ::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-gray-100;
+    @apply bg-transparent;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-primary rounded-full;
+    @apply bg-primary/20 hover:bg-primary/40 rounded-full;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-orange-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-soft hover:-translate-y-0.5 active:scale-95;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-accent hover:bg-orange-600 text-white font-bold rounded-2xl transition-all duration-300 shadow-soft hover:-translate-y-0.5 active:scale-95 text-sm;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center gap-2 px-6 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-xl transition-all duration-300 hover:bg-white hover:text-primary;
-  }
-
-  .btn-green {
-    @apply inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-[#07261d] text-white font-semibold rounded-xl transition-all duration-300 shadow-soft hover:-translate-y-0.5;
-  }
-
-  .btn-whatsapp {
-    @apply inline-flex items-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold rounded-xl transition-all duration-300 shadow-soft hover:-translate-y-0.5;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white border-2 border-forest text-forest font-bold rounded-2xl transition-all duration-300 hover:bg-forest hover:text-white active:scale-95 text-sm;
   }
 
   .section-title {
-    @apply text-2xl md:text-3xl font-display font-bold text-primary tracking-tight;
+    font-size: var(--font-size-2xl);
+    @apply font-display font-black text-forest tracking-tight mb-2;
   }
 
   .section-tag {
-    @apply inline-block text-xs font-bold tracking-widest uppercase text-accent mb-2;
-  }
-
-  .card-hover {
-    @apply hover:scale-[1.03] hover:shadow-card transition-all duration-300;
+    font-size: var(--font-size-xs);
+    @apply inline-block font-black tracking-widest uppercase text-accent mb-2;
   }
 
   .container-custom {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8;
   }
 
-  .hover-underline {
-    position: relative;
+  /* App-like Grid */
+  .adaptive-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr));
+    gap: var(--grid-gap);
   }
 
-  .hover-underline::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -4px;
-    width: 0%;
-    height: 2px;
-    background: #F59E0B;
-    transition: width 0.3s ease;
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-soft;
   }
 
-  .hover-underline:hover::after {
-    width: 100%;
+  .bottom-sheet {
+    @apply fixed bottom-0 left-0 right-0 bg-white rounded-t-[2.5rem] shadow-2xl z-[100] transform transition-transform duration-500 ease-out;
+  }
+
+  .input-field {
+    @apply w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-[1.25rem] focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/5 outline-none transition-all font-medium text-dark placeholder:text-gray-400;
+  }
+
+  .shadow-card {
+    @apply shadow-[0_8px_30px_rgb(0,0,0,0.04)];
+  }
+
+  .btn-whatsapp {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-4 bg-[#25D366] hover:bg-[#20bd5a] text-white font-black rounded-2xl transition-all duration-300 shadow-lg active:scale-95;
   }
 }
 
-/* Floating animation for hero images */
+/* Animations */
 @keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50%       { transform: translateY(-12px) rotate(1deg); }
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
 }
 
-/* Shimmer loading effect */
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
-.shimmer {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out forwards;
+}
+
+@keyframes scale-in {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* SaaS Admin Utilities */
+.glass-panel {
+  @apply bg-white/70 backdrop-blur-md border border-white/20;
+}
+
+.shadow-saas {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.shadow-saas-xl {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(226, 232, 240, 0) 0%,
+    rgba(226, 232, 240, 0.5) 50%,
+    rgba(226, 232, 240, 0) 100%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-.pulse-btn {
-  animation: pulse 2s infinite;
-}
-
-.ripple {
-  position: relative;
-  overflow: hidden;
-}
-
-.ripple::after {
-  content: "";
-  display: block;
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
-  background-repeat: no-repeat;
-  background-position: 50%;
-  transform: scale(10, 10);
-  opacity: 0;
-  transition: transform 0.5s, opacity 1s;
-}
-
-.ripple:active::after {
-  transform: scale(0, 0);
-  opacity: 0.3;
-  transition: 0s;
-}
-
-@keyframes page-fade-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-page {
-  animation: page-fade-in 0.5s ease-out forwards;
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 /* Nav blur on scroll */
 .nav-scrolled {
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.12);
+  @apply bg-white/90 backdrop-blur-xl shadow-md border-b-forest/5;
+}
+
+/* Hide scrollbar for clean app look where needed */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
