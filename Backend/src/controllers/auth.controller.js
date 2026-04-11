@@ -32,6 +32,8 @@ const sendTokenResponse = (user, statusCode, res) => {
 // ─── POST /api/auth/register ──────────────────────────────────────────────────
 const register = async (req, res, next) => {
   try {
+    const { name, email, password, mobile, address, pincode, role = 'user' } = req.body;
+
     // Clean payload of empty strings to avoid unique index collisions with sparse indexes
     const cleanedData = { name, password, address, pincode, role };
     if (email && email.trim() !== '') cleanedData.email = email.toLowerCase().trim();

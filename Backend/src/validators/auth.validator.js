@@ -13,16 +13,16 @@ const registerRules = [
     .isIn(['user', 'admin']).withMessage('Invalid role'),
 
   body('email')
-    .if(body('role').equals('admin'))
+    .if((value, { req }) => req.body.role === 'admin')
     .trim()
-    .notEmpty().withMessage('Email is required for admins')
+    .notEmpty().withMessage('Email is required for administrator accounts')
     .isEmail().withMessage('Please provide a valid email')
     .normalizeEmail(),
 
   body('mobile')
-    .if(body('role').equals('user'))
+    .if((value, { req }) => req.body.role !== 'admin')
     .trim()
-    .notEmpty().withMessage('Mobile is required for customers')
+    .notEmpty().withMessage('Mobile number is required for customer accounts')
     .matches(/^[0-9]{10}$/).withMessage('Mobile must be 10 digits'),
 
   body('password')
