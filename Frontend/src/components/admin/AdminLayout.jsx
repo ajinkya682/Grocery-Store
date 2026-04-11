@@ -71,6 +71,15 @@ const AdminLayout = () => {
     return saved === 'true';
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  // Mock Notifications
+  const mockNotifications = [
+    { id: 1, type: 'order', message: 'New Order #1024 received', time: '5m ago', unread: true },
+    { id: 2, type: 'stock', message: 'Low stock: Organic Turmeric', time: '1h ago', unread: true },
+    { id: 3, type: 'system', message: 'Daily backup completed successfully', time: '2h ago', unread: false },
+  ];
+  const unreadCount = mockNotifications.filter(n => n.unread).length;
 
   useEffect(() => {
     localStorage.setItem('admin_sidebar_collapsed', isCollapsed);
@@ -178,11 +187,45 @@ const AdminLayout = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-6">
-            <button className="relative p-2.5 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all">
+          <div className="flex items-center gap-2 sm:gap-6 relative">
+            <button 
+              onClick={(e) => { e.stopPropagation(); setIsNotificationOpen(!isNotificationOpen); }}
+              className="relative p-2.5 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all"
+            >
               <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+              {unreadCount > 0 && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />}
             </button>
+            
+            <AnimatePresence>
+              {isNotificationOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsNotificationOpen(false)} />
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute top-14 right-0 sm:right-auto w-80 bg-white rounded-3xl shadow-2xl border border-slate-100 z-50 overflow-hidden"
+                  >
+                    <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                      <h3 className="font-black text-slate-900">Notifications</h3>
+                      {unreadCount > 0 && <span className="text-[10px] font-black bg-slate-200 text-slate-600 px-2 py-1 rounded-lg">{unreadCount} New</span>}
+                    </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {mockNotifications.map(n => (
+                        <div key={n.id} className={`p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer ${n.unread ? 'bg-primary/5' : ''}`}>
+                          <p className={`text-sm ${n.unread ? 'font-black text-slate-900' : 'font-bold text-slate-600'}`}>{n.message}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{n.time}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="p-3 text-center border-t border-slate-100">
+                      <button className="text-xs font-black text-primary hover:underline">Mark all as read</button>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
             
             <div className="flex items-center gap-3 pl-2 sm:pl-6 border-l border-slate-200">
               <div className="text-right hidden sm:block">

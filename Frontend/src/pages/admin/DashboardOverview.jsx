@@ -1,6 +1,7 @@
 // src/pages/admin/DashboardOverview.jsx
 import { useEffect, useState } from 'react';
-import { mockService } from '../../api/mockService';
+import { Link } from 'react-router-dom';
+import { dashboardAPI } from '../../api/apiService';
 import { 
   DollarSign, 
   ShoppingBag, 
@@ -57,9 +58,27 @@ const DashboardOverview = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
-      const res = await mockService.getDashboardStats();
-      setData(res);
-      setLoading(false);
+      try {
+        const { data: res } = await dashboardAPI.getStats();
+        // Normalize API response shape to match component expectations
+        setData({
+          ...res.data.summary,
+          totalRevenue: `₹${res.data.summary.totalRevenue.toLocaleString('en-IN')}`,
+          salesTrend: res.data.salesTrend,
+          categoryRevenue: res.data.categoryRevenue,
+          topProducts: res.data.topProducts,
+          recentOrders: res.data.recentOrders,
+        });
+      } catch (err) {
+        console.error('Dashboard fetch failed:', err);
+        // Fallback empty state so UI doesn't crash
+        setData({
+          totalRevenue: '₹0', totalProducts: 0, activeOrders: 0, lowStockCount: 0,
+          salesTrend: [], categoryRevenue: [], topProducts: [], recentOrders: [],
+        });
+      } finally {
+        setLoading(false);
+      }
     };
     fetchDashboardData();
   }, []);
@@ -91,12 +110,12 @@ const DashboardOverview = () => {
           <p className="text-slate-500 font-bold text-sm mt-1">Real-time overview of your grocery empire.</p>
         </div>
         <div className="flex gap-3 w-full sm:w-auto">
-          <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 text-white px-6 py-3.5 rounded-2xl font-bold text-sm shadow-xl active:scale-95 transition-all">
+          <Link to="/admin/products" className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 text-white px-6 py-3.5 rounded-2xl font-bold text-sm shadow-xl active:scale-95 transition-all">
             <Plus size={18} /> Add Product
-          </button>
-          <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-sm hover:bg-slate-50 active:scale-95 transition-all">
+          </Link>
+          <Link to="/admin/orders" className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-sm hover:bg-slate-50 active:scale-95 transition-all">
             <ShoppingBag size={18} /> Manage Orders
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -201,27 +220,33 @@ const DashboardOverview = () => {
             <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">By Product Category</p>
           </div>
           <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.categoryRevenue} layout="vertical" margin={{ left: -20 }}>
-                <XAxis type="number" hide />
-                <YAxis 
-                  dataKey="name" 
-                  type="category" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 10, fontWeight: 900, fill: '#475569' }}
-                />
-                <Tooltip 
-                  cursor={{ fill: '#f8fafc' }}
-                  contentStyle={{ borderRadius: '15px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                />
-                <Bar dataKey="value" radius={[0, 10, 10, 0]} barSize={20}>
-                  {data.categoryRevenue.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            {data.categoryRevenue && data.categoryRevenue.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%" minHeight={350}>
+                <BarChart data={data.categoryRevenue} layout="vertical" margin={{ left: -20 }}>
+                  <XAxis type="number" hide />
+                  <YAxis 
+                    dataKey="name" 
+                    type="category" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 10, fontWeight: 900, fill: '#475569' }}
+                  />
+                  <Tooltip 
+                    cursor={{ fill: '#f8fafc' }}
+                    contentStyle={{ borderRadius: '15px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Bar dataKey="value" radius={[0, 10, 10, 0]} barSize={20}>
+                    {data.categoryRevenue.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold text-sm">
+                No revenue data available
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -246,26 +271,28 @@ const DashboardOverview = () => {
                 </tr>
               </thead>
               <tbody>
-                {data.topProducts.map((p, i) => (
-                  <tr key={p.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
+                {(data.topProducts || []).map((p) => (
+                  <tr key={p._id || p.name} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
                     <td className="py-5 px-8">
                       <div className="flex items-center gap-3">
-                        <img src={p.image} className="w-10 h-10 rounded-xl object-cover shadow-sm" alt="" />
+                        {p.image
+                          ? <img src={p.image} className="w-10 h-10 rounded-xl object-cover shadow-sm" alt="" />
+                          : <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center"><Package size={16} className="text-slate-300" /></div>
+                        }
                         <div>
                           <p className="text-sm font-black text-slate-800">{p.name}</p>
-                          <p className="text-[10px] text-slate-400 font-bold">{p.category}</p>
                         </div>
                       </div>
                     </td>
                     <td className="py-5 px-8">
-                      <p className="text-sm font-black text-slate-700">{p.sales}</p>
-                      <p className="text-[10px] text-green-500 font-black">{p.growth}</p>
+                      <p className="text-sm font-black text-slate-700">{p.sales} units</p>
+                      <p className="text-[10px] text-green-500 font-black">₹{(p.revenue || 0).toLocaleString('en-IN')}</p>
                     </td>
-                    <td className="py-5 px-8 font-black text-slate-900 text-sm">₹{p.price}</td>
+                    <td className="py-5 px-8 font-black text-slate-900 text-sm">—</td>
                     <td className="py-5 px-8">
-                      <span className={`flex items-center gap-1.5 text-[10px] font-black uppercase ${p.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                        <div className={`w-1.5 h-1.5 rounded-full ${p.stock > 0 ? 'bg-green-600' : 'bg-red-500'} animate-pulse`} />
-                        {p.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                      <span className="flex items-center gap-1.5 text-[10px] font-black uppercase text-green-600">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse" />
+                        Active
                       </span>
                     </td>
                     <td className="py-5 px-8 text-right">

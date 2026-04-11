@@ -1,7 +1,7 @@
 // src/pages/SearchResults.jsx
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { mockService } from '../api/mockService';
+import { useProduct } from '../context/ProductContext';
 import ProductCard from '../components/ui/ProductCard';
 import { Search } from 'lucide-react';
 
@@ -9,6 +9,7 @@ const SearchResults = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  const { searchProducts } = useProduct();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const query = queryParams.get('q') || '';
@@ -17,8 +18,8 @@ const SearchResults = () => {
     const fetchResults = async () => {
       setLoading(true);
       try {
-        const data = await mockService.searchProducts(query);
-        setResults(data);
+        const data = await searchProducts(query);
+        setResults(data || []);
       } catch (error) {
         console.error("Failed to search products", error);
         setResults([]);
@@ -58,7 +59,7 @@ const SearchResults = () => {
           // Results Grid
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
             {results.map(product => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product._id || product.id} product={product} />
             ))}
           </div>
         ) : (

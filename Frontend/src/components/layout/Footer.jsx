@@ -46,9 +46,13 @@ const Footer = () => {
         {/* Brand */}
         <div className="col-span-1 lg:col-span-1">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <Leaf size={18} className="text-white" />
-            </div>
+            {storeSettings?.identity?.logoUrl ? (
+               <img src={storeSettings.identity.logoUrl} alt="Store Logo" className="h-12 w-auto object-contain" />
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <Leaf size={18} className="text-white" />
+              </div>
+            )}
             <div className="leading-tight">
               <p className="font-black font-display text-dark tracking-tight text-base">{storeSettings?.identity?.name || 'Grocery Store'}</p>
               <p className="text-[9px] text-accent font-bold uppercase tracking-[0.2em]">{storeSettings?.identity?.tagline || 'Fresh & Pure'}</p>

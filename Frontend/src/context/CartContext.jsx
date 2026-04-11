@@ -7,27 +7,28 @@ const CartContext = createContext(null);
 const cartReducer = (state, action) => {
   switch (action.type) {
     case 'ADD_ITEM': {
-      const existing = state.items.find(i => i.id === action.payload.id);
+      const payloadId = action.payload._id || action.payload.id;
+      const existing = state.items.find(i => (i._id || i.id) === payloadId);
       if (existing) {
         return {
           ...state,
           items: state.items.map(i =>
-            i.id === action.payload.id ? { ...i, qty: i.qty + 1 } : i
+            (i._id || i.id) === payloadId ? { ...i, qty: i.qty + 1 } : i
           ),
         };
       }
       return { ...state, items: [...state.items, { ...action.payload, qty: 1 }] };
     }
     case 'REMOVE_ITEM':
-      return { ...state, items: state.items.filter(i => i.id !== action.payload) };
+      return { ...state, items: state.items.filter(i => (i._id || i.id) !== action.payload) };
     case 'UPDATE_QTY': {
       if (action.payload.qty <= 0) {
-        return { ...state, items: state.items.filter(i => i.id !== action.payload.id) };
+        return { ...state, items: state.items.filter(i => (i._id || i.id) !== action.payload.id) };
       }
       return {
         ...state,
         items: state.items.map(i =>
-          i.id === action.payload.id ? { ...i, qty: action.payload.qty } : i
+          (i._id || i.id) === action.payload.id ? { ...i, qty: action.payload.qty } : i
         ),
       };
     }
@@ -100,7 +101,7 @@ export const CartProvider = ({ children }) => {
     if (!isUserAuthenticated || !currentUser) return;
 
     const itemsList = state.items.map(
-      i => `- ${i.name} (${i.weight}) x${i.qty}`
+      i => `- ${i.name} (${i.unit || i.weight}) x${i.qty}`
     ).join('\n');
 
     const message = `

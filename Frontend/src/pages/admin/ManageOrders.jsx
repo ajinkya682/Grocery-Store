@@ -1,6 +1,6 @@
 // src/pages/admin/ManageOrders.jsx
 import { useState, useEffect } from 'react';
-import { mockService } from '../../api/mockService';
+import { ordersAPI } from '../../api/apiService';
 import { 
   ShoppingBag, 
   Search, 
@@ -30,7 +30,13 @@ const ORDER_STATUSES = [
 
 const OrderRow = ({ order, onStatusChange }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const status = ORDER_STATUSES.find(s => s.label === order.status) || ORDER_STATUSES[0];
+  const id = order._id || order.id;
+  const customerName = order.user?.name || 'Guest';
+  const orderNum = order.orderNumber || id;
+  const orderDate = order.createdAt || order.date || new Date().toISOString();
+  const total = order.pricing?.total ?? order.total ?? 0;
+  const itemCount = order.items?.length ?? order.items ?? 0;
+  const status = ORDER_STATUSES.find((s) => s.label === order.status) || ORDER_STATUSES[0];
   const StatusIcon = status.icon;
 
   return (
@@ -42,7 +48,7 @@ const OrderRow = ({ order, onStatusChange }) => {
                 <ShoppingBag size={18} />
              </div>
              <div>
-               <p className="text-sm font-black text-slate-900">{order.id}</p>
+               <p className="text-sm font-black text-slate-900">{orderNum}</p>
                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Order Ref</p>
              </div>
           </div>
@@ -50,26 +56,29 @@ const OrderRow = ({ order, onStatusChange }) => {
         <td className="py-6 px-6">
           <div className="flex items-center gap-3">
              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-[10px]">
-                {order.customer.charAt(0)}
+                {customerName.charAt(0).toUpperCase()}
              </div>
-             <p className="text-sm font-bold text-slate-700">{order.customer}</p>
+             <div>
+               <p className="text-sm font-bold text-slate-700">{customerName}</p>
+               {order.user?.email && <p className="text-[10px] text-slate-400 font-bold">{order.user.email}</p>}
+             </div>
           </div>
         </td>
         <td className="py-6 px-6">
           <div className="flex flex-col">
              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600">
                 <Calendar size={12} className="text-slate-300" />
-                {new Date(order.date).toLocaleDateString()}
+                {new Date(orderDate).toLocaleDateString()}
              </div>
              <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
                 <Clock size={10} />
-                {new Date(order.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {new Date(orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
              </div>
           </div>
         </td>
         <td className="py-6 px-6 text-sm font-black text-slate-900">
-           ₹{order.total}
-           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{order.items} items</p>
+           ₹{total.toLocaleString('en-IN')}
+           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{itemCount} items</p>
         </td>
         <td className="py-6 px-6">
           <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${status.bg} ${status.color}`}>
@@ -147,10 +156,10 @@ const OrderRow = ({ order, onStatusChange }) => {
                       <div className="space-y-6">
                          <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">Status Lifecycle</h4>
                          <div className="space-y-3">
-                            {ORDER_STATUSES.map(s => (
+                            {ORDER_STATUSES.map((s) => (
                                <button 
                                  key={s.label}
-                                 onClick={(e) => { e.stopPropagation(); onStatusChange(order.id, s.label); }}
+                                 onClick={(e) => { e.stopPropagation(); onStatusChange(id, s.label); }}
                                  className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${
                                    order.status === s.label 
                                     ? s.bg + ' ' + s.color + ' border-2 border-current shadow-lg ring-4 ring-offset-2 ring-transparent' 
@@ -200,20 +209,31 @@ const ManageOrders = () => {
 
   const fetchOrders = async () => {
     setLoading(true);
-    const res = await mockService.getOrders();
-    setOrders(res);
-    setLoading(false);
+    try {
+      const { data } = await ordersAPI.getAll({ limit: 50 });
+      setOrders(data.data.orders);
+    } catch (err) {
+      console.error('Orders fetch failed:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateOrderStatus = (id, newStatus) => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
-    // In real app, would call API here
+  const updateOrderStatus = async (id, newStatus) => {
+    try {
+      await ordersAPI.updateStatus(id, newStatus);
+      setOrders((prev) =>
+        prev.map((o) => (o._id === id ? { ...o, status: newStatus } : o))
+      );
+    } catch (err) {
+      alert(err.response?.data?.message || 'Status update failed');
+    }
   };
 
-  const filteredOrders = orders.filter(o => {
+  const filteredOrders = orders.filter((o) => {
     const matchesStatus = filter === 'All' || o.status === filter;
-    const matchesSearch = o.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          o.customer.toLowerCase().includes(searchQuery.toLowerCase());
+    const searchStr = `${o.orderNumber || ''} ${o.user?.name || ''} ${o.user?.email || ''}`.toLowerCase();
+    const matchesSearch = searchStr.includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
@@ -281,8 +301,8 @@ const ManageOrders = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filteredOrders.map(order => (
-                <OrderRow key={order.id} order={order} onStatusChange={updateOrderStatus} />
+              {filteredOrders.map((order) => (
+                <OrderRow key={order._id} order={order} onStatusChange={updateOrderStatus} />
               ))}
             </tbody>
           </table>

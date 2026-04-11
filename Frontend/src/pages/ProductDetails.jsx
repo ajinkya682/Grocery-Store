@@ -20,11 +20,12 @@ const ProductDetails = () => {
   const [selectedWeight, setSelectedWeight] = useState('');
 
   useEffect(() => {
-    const found = products.find(p => p.id === parseInt(id));
+    const found = products.find(p => p._id === id || p.id === id || p.id === parseInt(id));
     if (found) {
       setProduct(found);
-      setActiveImage(found.image);
-      setSelectedWeight(found.weight);
+      const imgUrl = found.images && found.images.length > 0 ? found.images[0].url : found.image || '/placeholder-grocery.png';
+      setActiveImage(imgUrl);
+      setSelectedWeight(found.unit || found.weight);
       window.scrollTo(0, 0);
     }
   }, [id, products]);
@@ -68,8 +69,8 @@ const ProductDetails = () => {
   const origin = product.origin || 'Kolhapur, India';
   const ingredients = product.ingredients || '100% Pure & Natural';
   const authenticity = product.authenticity || 'Store-certified';
-  const availableWeights = product.availableWeights || [{ label: product.weight }];
-  const thumbnails = product.thumbnails || [product.image];
+  const availableWeights = product.availableWeights || [{ label: product.unit || product.weight }];
+  const thumbnails = (product.images && product.images.length > 0) ? product.images.map(img => img.url) : [product.image || '/placeholder-grocery.png'];
   const longDesc = product.longDescription || product.description || 'Premium quality groceries freshly delivered.';
   
   const isMobile = window.innerWidth < 768;
@@ -294,8 +295,8 @@ const ProductDetails = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {products.filter(p => p.id !== product.id).slice(0, 4).map(p => (
-              <ProductCard key={p.id} product={p} />
+            {products.filter(p => (p._id || p.id) !== (product._id || product.id)).slice(0, 4).map(p => (
+              <ProductCard key={p._id || p.id} product={p} />
             ))}
           </div>
         </div>

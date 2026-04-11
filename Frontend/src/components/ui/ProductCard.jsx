@@ -76,11 +76,11 @@ const ProductCard = ({ product }) => {
         </button>
       )}
 
-      <Link to={`/product/${product.id}`} className="flex flex-col flex-grow">
+      <Link to={`/product/${product._id || product.id}`} className="flex flex-col flex-grow">
         {/* Image Container */}
         <div className="relative overflow-hidden bg-gray-50 aspect-[4/5] sm:aspect-square">
           <LazyImage
-            src={product.image}
+            src={product.images && product.images.length > 0 ? product.images[0].url : product.image || '/placeholder-grocery.png'}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
@@ -122,7 +122,7 @@ const ProductCard = ({ product }) => {
             {product.name}
           </h3>
           
-          <p className="text-[10px] sm:text-xs text-gray-500 font-bold mb-3 sm:mb-4">{product.weight}</p>
+          <p className="text-[10px] sm:text-xs text-gray-500 font-bold mb-3 sm:mb-4">{product.unit || product.weight}</p>
 
           {/* Pricing Section */}
           <div className="mt-auto flex items-end justify-between">

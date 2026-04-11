@@ -64,7 +64,7 @@ const FeaturedProducts = () => {
         <div className="adaptive-grid">
           {filtered.map((product, i) => (
             <div
-              key={product.id}
+              key={product._id || product.id}
               className="reveal h-full"
               style={{ transitionDelay: `${i * 80}ms` }}
             >

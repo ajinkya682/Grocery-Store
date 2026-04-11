@@ -1,7 +1,7 @@
 // src/components/layout/Navbar.jsx
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Leaf, Phone, User, Search as SearchIcon, X as CloseIcon } from "lucide-react";
+import { Leaf, Phone, User, Search as SearchIcon, X as CloseIcon, ShoppingCart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../../context/CartContext";
 import { useStore } from "../../context/StoreContext";
@@ -108,9 +108,13 @@ const Navbar = ({ isMobile }) => {
           id="nav-logo"
           className="flex items-center gap-3 active:scale-95 transition-transform"
         >
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-forest flex items-center justify-center shadow-green group-hover:rotate-6 transition-all">
-            <Leaf size={20} className="text-white" />
-          </div>
+          {storeSettings?.identity?.logoUrl ? (
+             <img src={storeSettings.identity.logoUrl} alt="Store Logo" className="h-10 w-auto object-contain" />
+          ) : (
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-forest flex items-center justify-center shadow-green group-hover:rotate-6 transition-all">
+              <Leaf size={20} className="text-white" />
+            </div>
+          )}
           <div className="hidden sm:block leading-tight">
             <h1 className="text-lg font-black font-display text-forest tracking-tighter">
               {storeSettings?.identity?.name || STORE_NAME}
@@ -251,11 +255,11 @@ const Navbar = ({ isMobile }) => {
           {/* Desktop WhatsApp CTA */}
           {!isMobile && (
             <button
-              onClick={() => orderViaWhatsApp()}
+              onClick={() => handleCartClick()}
               className="btn-primary"
             >
-              <WhatsAppIcon />
-              WhatsApp
+              <ShoppingCart size={18} />
+              Checkout
             </button>
           )}
         </div>

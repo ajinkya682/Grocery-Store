@@ -14,9 +14,11 @@ import {
   Camera,
   MessageSquare,
   Key,
-  Database
+  Database,
+  Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { uploadAPI } from '../../api/apiService';
 
 const SettingSection = ({ title, description, children }) => (
   <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 py-12 border-b border-slate-100 last:border-0">
@@ -69,21 +71,47 @@ const ToggleGroup = ({ label, description, checked, onChange }) => (
 );
 
 const ManageSettings = () => {
-  const { storeSettings, updateStoreSettings } = useStore();
+  const { storeSettings, updateSettings } = useStore();
   const [form, setForm] = useState(storeSettings || {
-    identity: { name: '', email: '', website: '', logo: '' },
-    operations: { currency: '₹', timezone: 'IST', deliveryCharge: 0 },
-    notifications: { emailAlerts: true, orderAlerts: true },
-    integrations: { whatsappNumber: '', whatsappApiKey: '' }
+    identity: { name: '', tagline: '', logoUrl: '' },
+    contact: { phone: '', email: '', whatsapp: '' },
+    location: { address: '', mapEmbedUrl: '' },
+    businessHours: { weekdays: '8:00 AM – 9:00 PM', weekends: '9:00 AM – 7:00 PM' },
+    delivery: { freeRadiusKm: 3, sameDayDelivery: true, freeDeliveryMinOrder: 499 },
+    social: { instagram: '', facebook: '', youtube: '' }
   });
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingLogo(true);
+      const { data } = await uploadAPI.uploadImages([file]);
+      if (data?.success && data.data?.[0]?.url) {
+        setForm((prev) => ({
+          ...prev,
+          identity: {
+            ...prev.identity,
+            logoUrl: data.data[0].url
+          }
+        }));
+      }
+    } catch (err) {
+      console.error('Logo upload failed', err);
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 800));
-    updateStoreSettings(form);
+    await updateSettings(form);
     setSaving(false);
     setSuccess(true);
     setTimeout(() => setSuccess(false), 2000);
@@ -117,11 +145,12 @@ const ManageSettings = () => {
           <div className="flex flex-col sm:flex-row gap-8 items-center pb-4">
              <div className="relative group">
                 <div className="w-24 h-24 rounded-[2rem] bg-slate-100 flex items-center justify-center text-slate-300 border-2 border-dashed border-slate-200 overflow-hidden">
-                   {form.identity?.logo ? <img src={form.identity.logo} className="w-full h-full object-cover" alt="" /> : <Camera size={32} />}
+                   {form.identity?.logoUrl ? <img src={form.identity.logoUrl} className="w-full h-full object-cover" alt="" /> : <Camera size={32} />}
                 </div>
-                <button className="absolute -bottom-2 -right-2 bg-white p-2.5 rounded-xl shadow-xl border border-slate-100 text-slate-500 hover:text-primary transition-all">
-                   <Camera size={16} />
-                </button>
+                <label className="absolute -bottom-2 -right-2 bg-white p-2.5 rounded-xl shadow-xl border border-slate-100 text-slate-500 hover:text-primary transition-all cursor-pointer">
+                   {uploadingLogo ? <Loader2 size={16} className="animate-spin text-primary" /> : <Camera size={16} />}
+                   <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} disabled={uploadingLogo} />
+                </label>
              </div>
              <div className="flex-1 space-y-2 text-center sm:text-left">
                 <p className="text-sm font-black text-slate-900">Brand Representation</p>
@@ -140,24 +169,24 @@ const ManageSettings = () => {
             <InputGroup 
               label="Contact Email" 
               icon={Globe} 
-              value={form.identity?.email} 
-              onChange={(e) => setForm({...form, identity: {...form.identity, email: e.target.value}})}
+              value={form.contact?.email} 
+              onChange={(e) => setForm({...form, contact: {...form.contact, email: e.target.value}})}
               placeholder="hello@store.com" 
               type="email"
             />
             <InputGroup 
               label="Business WhatsApp" 
               icon={Phone} 
-              value={form.integrations?.whatsappNumber} 
-              onChange={(e) => setForm({...form, integrations: {...form.integrations, whatsappNumber: e.target.value}})}
+              value={form.contact?.whatsapp} 
+              onChange={(e) => setForm({...form, contact: {...form.contact, whatsapp: e.target.value}})}
               placeholder="+91 00000 00000" 
             />
             <InputGroup 
-              label="Store Website" 
-              icon={Globe} 
-              value={form.identity?.website} 
-              onChange={(e) => setForm({...form, identity: {...form.identity, website: e.target.value}})}
-              placeholder="www.yourstore.com" 
+              label="Contact Phone" 
+              icon={Phone} 
+              value={form.contact?.phone} 
+              onChange={(e) => setForm({...form, contact: {...form.contact, phone: e.target.value}})}
+              placeholder="+91 00000 00000" 
             />
           </div>
         </SettingSection>
@@ -169,18 +198,19 @@ const ManageSettings = () => {
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <InputGroup 
-              label="Currency Symbol" 
-              icon={Store} 
-              value={form.operations?.currency} 
-              onChange={(e) => setForm({...form, operations: {...form.operations, currency: e.target.value}})}
-              placeholder="₹" 
+              label="Free Delivery Radius (km)" 
+              icon={MapPin} 
+              value={form.delivery?.freeRadiusKm} 
+              onChange={(e) => setForm({...form, delivery: {...form.delivery, freeRadiusKm: Number(e.target.value)}})}
+              placeholder="3" 
+              type="number"
             />
              <InputGroup 
-              label="Flat Delivery Charge" 
-              icon={MapPin} 
-              value={form.operations?.deliveryCharge} 
-              onChange={(e) => setForm({...form, operations: {...form.operations, deliveryCharge: Number(e.target.value)}})}
-              placeholder="0" 
+              label="Min Order for Free Delivery (₹)" 
+              icon={Store} 
+              value={form.delivery?.freeDeliveryMinOrder} 
+              onChange={(e) => setForm({...form, delivery: {...form.delivery, freeDeliveryMinOrder: Number(e.target.value)}})}
+              placeholder="499" 
               type="number"
             />
           </div>
@@ -221,12 +251,11 @@ const ManageSettings = () => {
              
              <div className="grid grid-cols-1 gap-6">
                 <InputGroup 
-                  label="API Endpoint Key" 
-                  icon={Key} 
-                  value={form.integrations?.whatsappApiKey} 
-                  onChange={(e) => setForm({...form, integrations: {...form.integrations, whatsappApiKey: e.target.value}})}
-                  placeholder="Bearer xxxxxxxxxxxxxxxxxxxx" 
-                  type="password"
+                  label="Instagram URL" 
+                  icon={Globe} 
+                  value={form.social?.instagram} 
+                  onChange={(e) => setForm({...form, social: {...form.social, instagram: e.target.value}})}
+                  placeholder="https://instagram.com/yourstore" 
                 />
              </div>
           </div>

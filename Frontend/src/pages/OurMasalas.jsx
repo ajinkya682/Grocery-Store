@@ -63,7 +63,13 @@ const OurMasalas = () => {
       navigate('/userlogin', { state: { from: location.pathname } });
       return;
     }
-    orderViaWhatsApp();
+    
+    if (activeProduct) {
+      // Ensure item is in cart first
+      addItem(activeProduct);
+      // Open cart for review before sending to WhatsApp
+      openCart();
+    }
   };
 
   const ingredients = [

@@ -1,5 +1,6 @@
-import { createContext, useState, useContext, useEffect } from 'react';
-import { AUTH_KEYS } from '../config/constants';
+// src/context/AuthContext.jsx
+import { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { authAPI } from '../api/apiService';
 
 const AuthContext = createContext();
 
@@ -7,94 +8,130 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // ─── Restore session on mount ────────────────────────────────────────────────
   useEffect(() => {
-    // Restore User Session
-    const savedUser = localStorage.getItem(AUTH_KEYS.CURRENT_USER);
-    if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser));
-    }
+    const restoreSession = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
-    // Restore Admin Session
-    const adminStatus = localStorage.getItem(AUTH_KEYS.ADMIN_AUTH);
-    if (adminStatus === 'true') {
-      setIsAdminAuthenticated(true);
-    }
-    
-    setLoading(false);
+      try {
+        const { data } = await authAPI.getMe();
+        setCurrentUser(data.data.user);
+      } catch (err) {
+        // Token invalid — clear storage
+        clearAuthData();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    restoreSession();
   }, []);
 
-  // --- User Auth Methods ---
-  
-  const registerUser = (userData) => {
-    const users = JSON.parse(localStorage.getItem(AUTH_KEYS.USERS) || '[]');
-    
-    // Check duplicate mobile
-    if (users.find(u => u.mobile === userData.mobile)) {
-      return { success: false, message: 'Mobile number already registered' };
-    }
-
-    const newUser = { ...userData };
-    const updatedUsers = [...users, newUser];
-    
-    localStorage.setItem(AUTH_KEYS.USERS, JSON.stringify(updatedUsers));
-    
-    // Auto Login
-    setCurrentUser(newUser);
-    localStorage.setItem(AUTH_KEYS.CURRENT_USER, JSON.stringify(newUser));
-    
-    return { success: true };
+  // ─── Store tokens & user ──────────────────────────────────────────────────────
+  const storeAuthData = (user, accessToken, refreshToken) => {
+    setCurrentUser(user);
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    localStorage.setItem('currentUser', JSON.stringify(user));
   };
 
-  const loginUser = (mobile, pin) => {
-    const users = JSON.parse(localStorage.getItem(AUTH_KEYS.USERS) || '[]');
-    const user = users.find(u => u.mobile === mobile && u.pin === pin);
-
-    if (user) {
-      setCurrentUser(user);
-      localStorage.setItem(AUTH_KEYS.CURRENT_USER, JSON.stringify(user));
-      return { success: true };
-    }
-    
-    return { success: false, message: 'Invalid mobile or passkey' };
-  };
-
-  const logoutUser = () => {
+  const clearAuthData = () => {
     setCurrentUser(null);
-    localStorage.removeItem(AUTH_KEYS.CURRENT_USER);
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('currentUser');
   };
 
-  // --- Admin Auth Methods ---
-
-  const loginAdmin = (email, password) => {
-    // Hardcoded credentials as requested
-    if (email === 'admin@shop.com' && password === 'admin123') {
-      setIsAdminAuthenticated(true);
-      localStorage.setItem(AUTH_KEYS.ADMIN_AUTH, 'true');
+  // ─── Register ─────────────────────────────────────────────────────────────────
+  const registerUser = async (userData) => {
+    try {
+      // Map 'pin' to 'password' for backend consistency
+      const payload = { 
+        ...userData, 
+        password: userData.pin || userData.password,
+        role: userData.role || 'user'
+      };
+      const { data } = await authAPI.register(payload);
+      storeAuthData(data.data.user, data.data.accessToken, data.data.refreshToken);
       return { success: true };
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || 'Registration failed',
+      };
     }
-    return { success: false, message: 'Invalid admin credentials' };
   };
 
-  const logoutAdmin = () => {
-    setIsAdminAuthenticated(false);
-    localStorage.removeItem(AUTH_KEYS.ADMIN_AUTH);
+  // ─── Login User ───────────────────────────────────────────────────────────────
+  const loginUser = async (mobile, pin) => {
+    try {
+      // Use 'identifier' to match the new backend v2 PRO architecture
+      const { data } = await authAPI.login({ identifier: mobile, password: pin });
+      const user = data.data.user;
+
+      if (user.role !== 'user') {
+        return { success: false, message: 'Invalid credentials for customer portal.' };
+      }
+
+      storeAuthData(user, data.data.accessToken, data.data.refreshToken);
+      return { success: true };
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || 'Invalid credentials. Please try again.',
+      };
+    }
   };
+
+  // ─── Login Admin ──────────────────────────────────────────────────────────────
+  const loginAdmin = async (email, password) => {
+    try {
+      // Use 'identifier' to match the new backend v2 PRO architecture
+      const { data } = await authAPI.login({ identifier: email, password: password });
+      const user = data.data.user;
+
+      if (user.role !== 'admin') {
+        return { success: false, message: 'Access denied. Admin only.' };
+      }
+
+      storeAuthData(user, data.data.accessToken, data.data.refreshToken);
+      return { success: true };
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || 'Invalid admin credentials.',
+      };
+    }
+  };
+
+  // ─── Logout ───────────────────────────────────────────────────────────────────
+  const logoutUser = async () => {
+    try { await authAPI.logout(); } catch { /* best-effort */ }
+    clearAuthData();
+  };
+
+  const logoutAdmin = logoutUser;
 
   return (
-    <AuthContext.Provider value={{ 
-      currentUser, 
-      isUserAuthenticated: !!currentUser,
-      isAdminAuthenticated,
-      loading, 
-      registerUser,
-      loginUser,
-      logoutUser,
-      loginAdmin,
-      logoutAdmin
-    }}>
+    <AuthContext.Provider
+      value={{
+        currentUser,
+        isUserAuthenticated: !!currentUser && currentUser.role === 'user',
+        isAdminAuthenticated: !!currentUser && currentUser.role === 'admin',
+        loading,
+        registerUser,
+        loginUser,
+        logoutUser,
+        loginAdmin,
+        logoutAdmin,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
