@@ -211,17 +211,40 @@ const Navbar = ({ isMobile }) => {
           {!isMobile && (
             <div className="hidden sm:block">
               {isUserAuthenticated ? (
-                <div className="flex items-center gap-3 pl-4 border-l border-gray-100">
+                <div className="relative group/profile flex items-center gap-3 pl-4 border-l border-gray-100">
                   <div className="text-right hidden xl:block">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Welcome</p>
-                    <p className="text-xs font-bold text-forest">{currentUser.name.split(' ')[0]}</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Welcome</p>
+                    <p className="text-xs font-bold text-forest leading-none">{currentUser.name.split(' ')[0]}</p>
                   </div>
-                  <button 
-                    onClick={logoutUser}
-                    className="w-10 h-10 rounded-2xl bg-forest/5 text-forest flex items-center justify-center hover:bg-forest hover:text-white transition-all"
-                  >
-                    <User size={18} />
-                  </button>
+                  
+                  <div className="relative group">
+                    <button className="w-10 h-10 rounded-2xl bg-forest/5 text-forest flex items-center justify-center hover:bg-forest hover:text-white transition-all ring-offset-2 hover:ring-2 ring-forest/20">
+                      <User size={18} />
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    <div className="absolute top-12 right-0 w-48 mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0 transition-all duration-300 z-[110]">
+                      <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden py-2">
+                         <div className="px-4 py-3 border-b border-gray-50 mb-1">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{currentUser.role} Account</p>
+                            <p className="text-xs font-bold text-dark truncate">{currentUser.name}</p>
+                         </div>
+                         <Link to="/orders" className="flex items-center gap-3 px-4 py-3 text-xs font-bold text-gray-600 hover:bg-forest/5 hover:text-forest transition-colors">
+                            <ShoppingBag size={14} /> My Orders
+                         </Link>
+                         <Link to="/contact" className="flex items-center gap-3 px-4 py-3 text-xs font-bold text-gray-600 hover:bg-forest/5 hover:text-forest transition-colors">
+                            <Phone size={14} /> Help Center
+                         </Link>
+                         <div className="h-[1px] bg-gray-50 my-1 mx-2" />
+                         <button 
+                            onClick={logoutUser}
+                            className="w-full text-left flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors"
+                         >
+                            <X size={14} /> Sign Out
+                         </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <Link to="/userlogin" className="btn-secondary py-2.5 px-6 border-forest/20">

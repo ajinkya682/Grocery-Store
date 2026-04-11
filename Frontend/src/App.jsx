@@ -10,6 +10,7 @@ import ProductDetails from './pages/ProductDetails';
 import OurMasalas from './pages/OurMasalas';
 import UserLogin from './pages/UserLogin';
 import AdminLogin from './pages/AdminLogin';
+import Orders from './pages/Orders';
 
 // Admin Components
 import AdminLayout from './components/admin/AdminLayout';
@@ -44,6 +45,7 @@ function App() {
                       <Route path="/search" element={<SearchResults />} />
                       <Route path="/our-masalas" element={<OurMasalas />} />
                       <Route path="/userlogin" element={<UserLogin />} />
+                      <Route path="/orders" element={<Orders />} />
                     </Routes>
                   </AppLayout>
                 } />
