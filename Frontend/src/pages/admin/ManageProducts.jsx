@@ -1,6 +1,8 @@
 // src/pages/admin/ManageProducts.jsx
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useProduct } from '../../context/ProductContext';
+import { useCart } from '../../context/CartContext';
+import { optimizeImages } from '../../utils/imageOptimizer';
 import { uploadAPI } from '../../api/apiService';
 import {
   Search,
@@ -26,8 +28,6 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 const MAX_FILES = 5;
 
 // ─── Image Drop Zone Component ────────────────────────────────────────────────
@@ -42,11 +42,7 @@ const ImageDropZone = ({ uploadedImages, onImagesChange }) => {
     const valid = [];
     const errors = [];
     for (const f of files) {
-      if (!ALLOWED_TYPES.includes(f.type)) {
-        errors.push(`"${f.name}" is not a supported type (jpg/png/webp only)`);
-      } else if (f.size > MAX_FILE_SIZE) {
-        errors.push(`"${f.name}" exceeds 2MB limit`);
-      } else if (uploadedImages.length + valid.length >= MAX_FILES) {
+      if (uploadedImages.length + valid.length >= MAX_FILES) {
         errors.push(`Maximum ${MAX_FILES} images allowed`);
         break;
       } else {
@@ -56,12 +52,15 @@ const ImageDropZone = ({ uploadedImages, onImagesChange }) => {
     return { valid, errors };
   };
 
+  const { showToast } = useCart();
+
   const handleUpload = useCallback(async (files) => {
     if (!files || files.length === 0) return;
     const { valid, errors } = validateFiles(Array.from(files));
 
     if (errors.length > 0) {
       setError(errors[0]);
+      showToast(errors[0], 'error');
       return;
     }
     if (valid.length === 0) return;
@@ -71,19 +70,29 @@ const ImageDropZone = ({ uploadedImages, onImagesChange }) => {
     setUploadProgress(0);
 
     try {
-      const { data } = await uploadAPI.uploadImages(valid, (progress) => {
+      // 1. Instant Preview (Temporary optimization feedback)
+      // (Optional: show previews instantly with URIs while uploading)
+
+      // 2. Client-side Multi-Image Optimization
+      const optimizedFiles = await optimizeImages(valid, { maxWidth: 800, quality: 0.7 });
+
+      // 3. Upload Optimized Files to Backend
+      const { data } = await uploadAPI.uploadImages(optimizedFiles, (progress) => {
         setUploadProgress(progress);
       });
-      // data.data = [{ url, fileId }, ...]
+      
       onImagesChange([...uploadedImages, ...data.data]);
+      showToast(`${optimizedFiles.length} images uploaded successfully`, 'success');
     } catch (err) {
+      console.error('Products Imagekit Upload Error:', err);
       setError(err.response?.data?.message || 'Upload failed. Please try again.');
+      showToast('Upload failed. Please check your connection.', 'error');
     } finally {
       setUploading(false);
       setUploadProgress(0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uploadedImages, onImagesChange]);
+  }, [uploadedImages, onImagesChange, showToast]);
 
   const onDrop = (e) => {
     e.preventDefault();

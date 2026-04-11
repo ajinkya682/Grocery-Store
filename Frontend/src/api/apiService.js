@@ -10,16 +10,24 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: 15000,
-  headers: { 'Content-Type': 'application/json' },
 });
 
-// ─── Request Interceptor: Attach JWT ─────────────────────────────────────────
+// ─── Request Interceptor: Attach JWT & Handle Content-Type ───────────────────
 api.interceptors.request.use(
   (config) => {
+    // 1. Attach JWT Token
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // 2. Smart Content-Type Handling
+    // If sending FormData, let the browser/axios set it (includes boundary)
+    // Otherwise, default to application/json for standard objects
+    if (config.data && !(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
@@ -100,7 +108,6 @@ export const uploadAPI = {
     const formData = new FormData();
     files.forEach((file) => formData.append('images', file));
     return api.post('/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress: onProgress
         ? (e) => onProgress(Math.round((e.loaded * 100) / e.total))
         : undefined,

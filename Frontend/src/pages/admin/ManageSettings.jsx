@@ -1,6 +1,8 @@
 // src/pages/admin/ManageSettings.jsx
 import { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
+import { useCart } from '../../context/CartContext';
+import { optimizeImage } from '../../utils/imageOptimizer';
 import { 
   Store, 
   MapPin, 
@@ -72,6 +74,7 @@ const ToggleGroup = ({ label, description, checked, onChange }) => (
 
 const ManageSettings = () => {
   const { storeSettings, updateSettings } = useStore();
+  const { showToast } = useCart();
   const [form, setForm] = useState(storeSettings || {
     identity: { name: '', tagline: '', logoUrl: '' },
     contact: { phone: '', email: '', whatsapp: '' },
@@ -93,9 +96,22 @@ const ManageSettings = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // 1. Instant Preview
+    const previewUrl = URL.createObjectURL(file);
+    setForm((prev) => ({
+      ...prev,
+      identity: { ...prev.identity, logoUrl: previewUrl }
+    }));
+
     try {
       setUploadingLogo(true);
-      const { data } = await uploadAPI.uploadImages([file]);
+      
+      // 2. Client-side Optimization (Resize & Compress)
+      const optimizedFile = await optimizeImage(file, { maxWidth: 512, quality: 0.8 });
+      
+      // 3. Upload to Backend
+      const { data } = await uploadAPI.uploadImages([optimizedFile]);
+      
       if (data?.success && data.data?.[0]?.url) {
         setForm((prev) => ({
           ...prev,
@@ -104,9 +120,16 @@ const ManageSettings = () => {
             logoUrl: data.data[0].url
           }
         }));
+        showToast("Logo uploaded and optimized successfully", "success");
       }
     } catch (err) {
       console.error('Logo upload failed', err);
+      showToast("Logo upload failed. Please try again.", "error");
+      // Revert to original if failed
+      setForm((prev) => ({
+        ...prev,
+        identity: { ...prev.identity, logoUrl: storeSettings.identity?.logoUrl }
+      }));
     } finally {
       setUploadingLogo(false);
     }
