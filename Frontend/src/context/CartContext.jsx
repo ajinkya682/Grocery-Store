@@ -4,6 +4,8 @@ import { useStore } from './StoreContext';
 import { AUTH_KEYS } from '../config/constants';
 import { generateWhatsAppLink } from '../utils/whatsapp';
 import { ordersAPI } from '../api/apiService';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const CartContext = createContext(null);
 
@@ -51,6 +53,12 @@ export const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   // Load user-specific cart on login/start
   useEffect(() => {
@@ -101,30 +109,43 @@ export const CartProvider = ({ children }) => {
   const totalPrice = state.items.reduce((s, i) => s + i.price * i.qty, 0);
 
   const orderViaWhatsApp = async () => {
-    if (!isUserAuthenticated || !currentUser) return;
+    if (!isUserAuthenticated || !currentUser) {
+      showToast("Please login to place an order or inquiry.", "error");
+      return;
+    }
     
     // 1. Validate Store Configuration
     if (!storeSettings?.contact?.whatsapp) {
-      alert("Store WhatsApp contact is not configured. Please contact the store administrator.");
+      showToast("Store contact not configured", "error");
       return;
     }
     
-    // 2. Validate Cart
+    // 2. Branch Check: Empty Cart Fallback (Lead Generation)
     if (state.items.length === 0) {
-      alert("Your cart is empty! Add some products before checking out.");
+      showToast("Cart is empty, sending inquiry", "success");
+      
+      const inquiryLink = generateWhatsAppLink({
+        type: 'inquiry',
+        currentUser
+      }, storeSettings);
+
+      if (inquiryLink) {
+        window.open(inquiryLink, '_blank');
+        closeCart();
+      }
       return;
     }
 
-    // 3. Validate User Profile (Address & Pincode)
+    // 3. Normal Order Flow: Validate User Profile (Address & Pincode)
     if (!currentUser.address || !currentUser.pincode) {
-      alert("Please complete your address and pincode in your profile before placing an order.");
+      showToast("Please complete your address in your profile first.", "error");
       return;
     }
 
     try {
       setIsProcessing(true);
 
-      // 2. Prepare order payload for Backend
+      // Prepare order payload for Backend
       const orderData = {
         items: state.items.map(item => ({
           productId: item._id || item.id,
@@ -134,39 +155,40 @@ export const CartProvider = ({ children }) => {
         })),
         shippingAddress: {
           name: currentUser.name || 'Valued Customer',
-          phone: (currentUser.mobile || '').replace(/\D/g, '').slice(-10), // Clean: only last 10 digits
+          phone: (currentUser.mobile || '').replace(/\D/g, '').slice(-10),
           address: currentUser.address || 'Address Not Provided',
           city: 'Kolhapur',
-          pincode: (currentUser.pincode || '416000').replace(/\D/g, '').slice(0, 6) // Clean: only 6 digits
+          pincode: (currentUser.pincode || '416000').replace(/\D/g, '').slice(0, 6)
         },
         paymentMethod: 'COD'
       };
 
-      // 3. Persist Order in MongoDB
+      // Persist Order in MongoDB
       const { data } = await ordersAPI.create(orderData);
       
       if (data.success) {
         const order = data.data.order;
         
-        // 4. Generate Link & Redirect
+        // Generate Link & Redirect
         const waUrl = generateWhatsAppLink({
           order,
           currentUser
         }, storeSettings);
 
-        window.open(waUrl, '_blank');
-        
-        // 5. Cleanup
-        dispatch({ type: 'CLEAR_CART' });
-        closeCart();
+        if (waUrl) {
+          window.open(waUrl, '_blank');
+          dispatch({ type: 'CLEAR_CART' });
+          closeCart();
+        }
       }
     } catch (err) {
-      console.error('SaaS v4 Order Persistence Failed:', err);
-      alert(err.response?.data?.message || 'Order creation failed. Please try again.');
+      console.error('Order Flow Failed:', err);
+      showToast(err.response?.data?.message || 'Order creation failed.', 'error');
     } finally {
       setIsProcessing(false);
     }
   };
+
 
   return (
     <CartContext.Provider
@@ -174,12 +196,33 @@ export const CartProvider = ({ children }) => {
         items: state.items, addItem, removeItem, updateQty, clearCart, 
         totalItems, totalPrice, orderViaWhatsApp,
         isCartOpen, setIsCartOpen, toggleCart, openCart, closeCart,
-        isProcessing
+        isProcessing, showToast
       }}
     >
       {children}
+
+      {/* Global Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 50, x: '-50%' }}
+            className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl font-black text-xs uppercase tracking-widest ${
+              toast.type === 'success' ? 'bg-forest text-white' : 'bg-red-500 text-white'
+            }`}
+          >
+            {toast.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+            {toast.message}
+            <button onClick={() => setToast(null)} className="ml-2 opacity-70 hover:opacity-100 transition-all">
+              <X size={14} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </CartContext.Provider>
   );
+
 };
 
 export const useCart = () => {
