@@ -57,15 +57,27 @@ export const AuthProvider = ({ children }) => {
         password: userData.pin || userData.password,
         role: userData.role || 'user'
       };
+
+      // Remove empty strings to avoid unique index collisions in Mongo
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === '') delete payload[key];
+      });
+
       const { data } = await authAPI.register(payload);
       storeAuthData(data.data.user, data.data.accessToken, data.data.refreshToken);
       return { success: true };
     } catch (err) {
       let message = err.response?.data?.message || 'Registration failed';
       
-      // Handle Conflict (409) specifically if message is generic
-      if (err.response?.status === 409 && message === 'Registration failed') {
-        message = 'User already exists with this mobile/email.';
+      // Handle Conflict (409) specifically
+      if (err.response?.status === 409) {
+        if (message.includes('Mobile')) {
+             message = 'Mobile number already registered. Please sign in instead.';
+        } else if (message.includes('Email')) {
+             message = 'Email address already registered. Please sign in instead.';
+        } else {
+             message = 'Account already exists. Try signing in.';
+        }
       }
 
       return {
