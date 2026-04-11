@@ -59,11 +59,26 @@ const applySecurityMiddleware = (app) => {
         const allowed = parseOrigins();
         const incomingOrigin = origin ? origin.replace(/\/$/, '').toLowerCase() : null;
         
-        // Allow Postman / curl (no origin) in development
-        if (!incomingOrigin || allowed.includes(incomingOrigin) || process.env.NODE_ENV === 'development') {
+        // ─── Production Safeguard ───
+        // Hardcoded safe origins as fallbacks in case env vars are missing or misconfigured
+        const hardcodedSafeOrigins = [
+          'https://grocery-store-mu-roan.vercel.app',
+          'https://grocery-store-hm32.onrender.com'
+        ];
+
+        const isAllowed = 
+          !incomingOrigin || 
+          allowed.includes(incomingOrigin) || 
+          hardcodedSafeOrigins.some(o => incomingOrigin.includes(o)) ||
+          process.env.NODE_ENV === 'development';
+
+        if (isAllowed) {
           cb(null, true);
         } else {
-          cb(new Error(`CORS: Origin ${origin} not allowed`));
+          // Log exactly what is being rejected so we can fix it in the dashboard
+          logger.warn(`🛑 CORS REJECTED | Origin: ${origin} | Expected one of: [${allowed.join(', ')}]`);
+          // Graceful rejection: Return false instead of an Error to the cb
+          cb(null, false);
         }
       },
       credentials: true,
