@@ -31,11 +31,11 @@ module.exports = {
   RATE_LIMIT: {
     GLOBAL: {
       WINDOW_MS: 15 * 60 * 1000, // 15 min
-      MAX: 100,
+      MAX: 1000,
     },
     AUTH: {
       WINDOW_MS: 15 * 60 * 1000,
-      MAX: 50,
+      MAX: 200,
     },
   },
 
@@ -47,10 +47,10 @@ module.exports = {
   },
 
   // Order status lifecycle
-  ORDER_STATUSES: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'],
+  ORDER_STATUSES: ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'],
   ORDER_VALID_TRANSITIONS: {
-    Pending: ['Processing', 'Cancelled'],
-    Processing: ['Shipped', 'Cancelled'],
+    Pending: ['Confirmed', 'Cancelled'],
+    Confirmed: ['Shipped', 'Cancelled'],
     Shipped: ['Delivered'],
     Delivered: [],
     Cancelled: [],

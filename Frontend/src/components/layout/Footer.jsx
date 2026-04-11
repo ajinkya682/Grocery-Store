@@ -106,15 +106,15 @@ const Footer = () => {
           <ul className="space-y-4">
             <li className="flex items-start gap-3">
               <MapPin size={16} className="text-accent mt-0.5 flex-shrink-0" />
-              <span className="font-medium text-gray-500">123, Mahadwar Road, Kolhapur, Maharashtra 416001</span>
+              <span className="font-medium text-gray-500">{storeSettings?.location?.address || 'Heritage Square, Kolhapur'}</span>
             </li>
             <li className="flex items-center gap-3">
               <Phone size={16} className="text-accent flex-shrink-0" />
-              <a href={`tel:${storeSettings?.contact?.phone?.replace(/\s+/g,'')}`} className="font-medium hover:text-accent transition-colors text-gray-500">{storeSettings?.contact?.phone || '+91 98765 43210'}</a>
+              <a href={`tel:${(storeSettings?.contact?.phone || '').replace(/\D/g,'')}`} className="font-medium hover:text-accent transition-colors text-gray-500">{storeSettings?.contact?.phone || 'Contact Not Set'}</a>
             </li>
             <li className="flex items-center gap-3">
               <Mail size={16} className="text-accent flex-shrink-0" />
-              <a href={`mailto:${storeSettings?.contact?.email}`} className="font-medium hover:text-accent transition-colors text-gray-500">{storeSettings?.contact?.email || 'store@grocerystore.in'}</a>
+              <a href={`mailto:${storeSettings?.contact?.email}`} className="font-medium hover:text-accent transition-colors text-gray-500">{storeSettings?.contact?.email || 'Email Not Set'}</a>
             </li>
           </ul>
           <div className="mt-6 p-4 bg-light rounded-xl border border-gray-100">

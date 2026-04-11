@@ -36,6 +36,14 @@ const userSchema = new mongoose.Schema(
       trim: true,
       match: [/^[0-9]{10}$/, 'Mobile must be 10 digits'],
     },
+    address: {
+      type: String,
+      trim: true,
+    },
+    pincode: {
+      type: String,
+      trim: true,
+    },
     role: {
       type: String,
       enum: { values: Object.values(ROLES), message: 'Invalid role' },

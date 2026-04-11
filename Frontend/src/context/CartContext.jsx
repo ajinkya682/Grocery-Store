@@ -1,10 +1,14 @@
 import { createContext, useContext, useReducer, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
-import { AUTH_KEYS, WHATSAPP_NUMBER } from '../config/constants';
+import { useStore } from './StoreContext';
+import { AUTH_KEYS } from '../config/constants';
+import { generateWhatsAppLink } from '../utils/whatsapp';
+import { ordersAPI } from '../api/apiService';
 
 const CartContext = createContext(null);
 
 const cartReducer = (state, action) => {
+  // ... (keep reducer logic same)
   switch (action.type) {
     case 'ADD_ITEM': {
       const payloadId = action.payload._id || action.payload.id;
@@ -43,8 +47,10 @@ const cartReducer = (state, action) => {
 
 export const CartProvider = ({ children }) => {
   const { currentUser, isUserAuthenticated } = useAuth();
+  const { storeSettings } = useStore();
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Load user-specific cart on login/start
   useEffect(() => {
@@ -67,10 +73,7 @@ export const CartProvider = ({ children }) => {
   }, [state.items, isUserAuthenticated, currentUser?.mobile]);
 
   const addItem = (product) => {
-    if (!isUserAuthenticated) {
-      // In a real app, we might trigger a toast here
-      return false; // Signal failure to the component
-    }
+    if (!isUserAuthenticated) return false;
     dispatch({ type: 'ADD_ITEM', payload: product });
     setIsCartOpen(true);
     return true;
@@ -97,32 +100,72 @@ export const CartProvider = ({ children }) => {
   const totalItems = state.items.reduce((s, i) => s + i.qty, 0);
   const totalPrice = state.items.reduce((s, i) => s + i.price * i.qty, 0);
 
-  const orderViaWhatsApp = () => {
+  const orderViaWhatsApp = async () => {
     if (!isUserAuthenticated || !currentUser) return;
+    
+    // 1. Validate Store Configuration
+    if (!storeSettings?.contact?.whatsapp) {
+      alert("Store WhatsApp contact is not configured. Please contact the store administrator.");
+      return;
+    }
+    
+    // 2. Validate Cart
+    if (state.items.length === 0) {
+      alert("Your cart is empty! Add some products before checking out.");
+      return;
+    }
 
-    const itemsList = state.items.map(
-      i => `- ${i.name} (${i.unit || i.weight}) x${i.qty}`
-    ).join('\n');
+    // 3. Validate User Profile (Address & Pincode)
+    if (!currentUser.address || !currentUser.pincode) {
+      alert("Please complete your address and pincode in your profile before placing an order.");
+      return;
+    }
 
-    const message = `
-Hello, I want to place an order:
+    try {
+      setIsProcessing(true);
 
-*Customer Information:*
-Name: ${currentUser.name}
-Mobile: ${currentUser.mobile}
-Address: ${currentUser.address} - ${currentUser.pincode}
+      // 2. Prepare order payload for Backend
+      const orderData = {
+        items: state.items.map(item => ({
+          productId: item._id || item.id,
+          quantity: item.qty,
+          name: item.name,
+          price: item.price
+        })),
+        shippingAddress: {
+          name: currentUser.name || 'Valued Customer',
+          phone: (currentUser.mobile || '').replace(/\D/g, '').slice(-10), // Clean: only last 10 digits
+          address: currentUser.address || 'Address Not Provided',
+          city: 'Kolhapur',
+          pincode: (currentUser.pincode || '416000').replace(/\D/g, '').slice(0, 6) // Clean: only 6 digits
+        },
+        paymentMethod: 'COD'
+      };
 
-*Order Details:*
-${itemsList}
+      // 3. Persist Order in MongoDB
+      const { data } = await ordersAPI.create(orderData);
+      
+      if (data.success) {
+        const order = data.data.order;
+        
+        // 4. Generate Link & Redirect
+        const waUrl = generateWhatsAppLink({
+          order,
+          currentUser
+        }, storeSettings);
 
-*Subtotal: ₹${totalPrice}*
-*Delivery: ₹${totalPrice >= 499 ? 0 : 40}*
-*Total: ₹${totalPrice + (totalPrice >= 499 ? 0 : 40)}*
-
-Please confirm my order. Thank you!
-`.trim();
-
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+        window.open(waUrl, '_blank');
+        
+        // 5. Cleanup
+        dispatch({ type: 'CLEAR_CART' });
+        closeCart();
+      }
+    } catch (err) {
+      console.error('SaaS v4 Order Persistence Failed:', err);
+      alert(err.response?.data?.message || 'Order creation failed. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -130,7 +173,8 @@ Please confirm my order. Thank you!
       value={{ 
         items: state.items, addItem, removeItem, updateQty, clearCart, 
         totalItems, totalPrice, orderViaWhatsApp,
-        isCartOpen, setIsCartOpen, toggleCart, openCart, closeCart 
+        isCartOpen, setIsCartOpen, toggleCart, openCart, closeCart,
+        isProcessing
       }}
     >
       {children}

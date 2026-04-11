@@ -108,26 +108,32 @@ const OrderRow = ({ order, onStatusChange }) => {
                    <div className="lg:col-span-8 space-y-8">
                       <div className="flex items-center justify-between">
                          <h4 className="text-lg font-black text-slate-900">Customer Intelligence</h4>
-                         <button className="flex items-center gap-2 text-primary font-black uppercase tracking-widest text-[10px] hover:underline">
+                         <a 
+                           href={`https://wa.me/${(order.shippingAddress?.phone || order.user?.mobile || '').replace(/\D/g, '')}`}
+                           target="_blank"
+                           rel="noreferrer"
+                           className="flex items-center gap-2 text-primary font-black uppercase tracking-widest text-[10px] hover:underline"
+                         >
                             <Phone size={14} /> Contact via WhatsApp
-                         </button>
+                         </a>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
                          <div className="space-y-4">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Contact Details</p>
                             <div className="space-y-3">
                                <div className="flex items-center gap-3 text-sm font-bold text-slate-700">
-                                  <User size={16} className="text-slate-300" /> {order.customer}
+                                  <User size={16} className="text-slate-300" /> {order.shippingAddress?.name || order.user?.name}
                                </div>
                                <div className="flex items-center gap-3 text-sm font-bold text-slate-700">
-                                  <Phone size={16} className="text-slate-300" /> +91 98765 43210
+                                  <Phone size={16} className="text-slate-300" /> {order.shippingAddress?.phone || order.user?.mobile || 'No Phone'}
                                </div>
                             </div>
                          </div>
                          <div className="space-y-4">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Delivery Address</p>
                             <p className="text-sm font-bold text-slate-600 leading-relaxed">
-                               Flat 402, Green Valley Apartments, Kolhapur, Maharashtra 416001
+                               {order.shippingAddress?.address}, {order.shippingAddress?.city}, {order.shippingAddress?.pincode}
+                               {order.shippingAddress?.landmark && <span className="block text-[10px] mt-1 text-slate-400">Landmark: {order.shippingAddress.landmark}</span>}
                             </p>
                          </div>
                       </div>
@@ -135,16 +141,18 @@ const OrderRow = ({ order, onStatusChange }) => {
                       <div className="space-y-4">
                          <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">Order Payload</h4>
                          <div className="space-y-3">
-                            {[1, 2, 3].map(i => (
-                              <div key={i} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
+                            {order.items.map((item, idx) => (
+                              <div key={idx} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
                                  <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300"><Package size={20} /></div>
+                                    <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 overflow-hidden">
+                                       {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <Package size={20} />}
+                                    </div>
                                     <div>
-                                       <p className="text-sm font-bold text-slate-800">Fresh Organic Turmeric Powder</p>
-                                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">250g Jar x 2</p>
+                                       <p className="text-sm font-bold text-slate-800">{item.name}</p>
+                                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">₹{item.price} x {item.quantity}</p>
                                     </div>
                                  </div>
-                                 <p className="text-sm font-black text-slate-900">₹350</p>
+                                 <p className="text-sm font-black text-slate-900">₹{item.price * item.quantity}</p>
                               </div>
                             ))}
                          </div>

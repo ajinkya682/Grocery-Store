@@ -54,7 +54,12 @@ const createOrder = async (req, res, next) => {
       });
     }
 
-    const deliveryFee = subtotal >= 499 ? 0 : 40;
+    // Fetch store settings for delivery logic
+    const StoreSettings = require('../models/StoreSettings.model');
+    const settings = await StoreSettings.getSingleton();
+    const freeThreshold = settings?.delivery?.freeDeliveryMinOrder || 499;
+
+    const deliveryFee = subtotal >= freeThreshold ? 0 : 40;
     const total = subtotal + deliveryFee;
 
     const [order] = await Order.create(

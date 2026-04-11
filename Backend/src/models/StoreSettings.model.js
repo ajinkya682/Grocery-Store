@@ -12,7 +12,17 @@ const storeSettingsSchema = new mongoose.Schema(
     contact: {
       phone: { type: String, default: '', trim: true },
       email: { type: String, default: '', lowercase: true, trim: true },
-      whatsapp: { type: String, default: '', trim: true },
+      whatsapp: { 
+        type: String, 
+        default: '919657459908', 
+        trim: true,
+        validate: {
+          validator: function(v) {
+            return /^[0-9]{10,13}$/.test(v);
+          },
+          message: props => `${props.value} is not a valid WhatsApp number! Use 10-13 digits without spaces or plus signs.`
+        }
+      },
     },
     location: {
       address: { type: String, default: '', trim: true },

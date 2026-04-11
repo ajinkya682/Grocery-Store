@@ -48,7 +48,7 @@ const createOrderRules = [
 const updateStatusRules = [
   body('status')
     .notEmpty().withMessage('Status is required')
-    .isIn(['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'])
+    .isIn(['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'])
     .withMessage('Invalid status value'),
 
   body('note')

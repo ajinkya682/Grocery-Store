@@ -20,6 +20,8 @@ const sendTokenResponse = (user, statusCode, res) => {
         email: user.email,
         role: user.role,
         mobile: user.mobile,
+        address: user.address,
+        pincode: user.pincode,
       },
       accessToken,
       refreshToken,
@@ -30,7 +32,7 @@ const sendTokenResponse = (user, statusCode, res) => {
 // ─── POST /api/auth/register ──────────────────────────────────────────────────
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, mobile, role = 'user' } = req.body;
+    const { name, email, password, mobile, address, pincode, role = 'user' } = req.body;
 
     // Check for existing by unique identifier
     if (role === 'admin' && email) {
@@ -41,7 +43,7 @@ const register = async (req, res, next) => {
        if (existing) throw new ConflictError('Mobile number already registered', 'MOBILE_TAKEN');
     }
 
-    const user = await User.create({ name, email, password, mobile, role });
+    const user = await User.create({ name, email, password, mobile, address, pincode, role });
 
     logger.info(`New ${role} registered: ${email || mobile}`);
     sendTokenResponse(user, 201, res);
@@ -90,6 +92,8 @@ const login = async (req, res, next) => {
           email: user.email,
           role: user.role,
           mobile: user.mobile,
+          address: user.address,
+          pincode: user.pincode,
         },
         accessToken,
         refreshToken,

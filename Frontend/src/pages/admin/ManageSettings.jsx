@@ -84,6 +84,11 @@ const ManageSettings = () => {
   const [success, setSuccess] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
+  // Validation Logic
+  const whatsappRegex = /^[0-9]{10,13}$/;
+  const isWhatsappValid = !form.contact?.whatsapp || whatsappRegex.test(form.contact.whatsapp);
+  const isFormValid = isWhatsappValid;
+
   const handleLogoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -108,6 +113,7 @@ const ManageSettings = () => {
   };
 
   const handleSave = async () => {
+    if (!isFormValid) return;
     setSaving(true);
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 800));
@@ -127,9 +133,11 @@ const ManageSettings = () => {
         </div>
         <button 
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || !isFormValid}
           className={`flex items-center justify-center gap-2 px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 ${
-            success ? 'bg-green-500 text-white shadow-lg' : 'bg-primary text-white shadow-xl shadow-primary/10 hover:bg-forest'
+            success ? 'bg-green-500 text-white shadow-lg' : 
+            !isFormValid ? 'bg-slate-200 text-slate-400 cursor-not-allowed' :
+            'bg-primary text-white shadow-xl shadow-primary/10 hover:bg-forest'
           }`}
         >
           {saving ? 'Synchronizing...' : success ? <><Check size={18} /> Settings Applied</> : <><Save size={18} /> Commit Changes</>}
@@ -174,13 +182,31 @@ const ManageSettings = () => {
               placeholder="hello@store.com" 
               type="email"
             />
-            <InputGroup 
-              label="Business WhatsApp" 
-              icon={Phone} 
-              value={form.contact?.whatsapp} 
-              onChange={(e) => setForm({...form, contact: {...form.contact, whatsapp: e.target.value}})}
-              placeholder="+91 00000 00000" 
-            />
+            <div className="space-y-1">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Business WhatsApp</label>
+                <div className="relative">
+                  <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300">
+                    <Phone size={18} />
+                  </div>
+                  <input 
+                    type="text"
+                    value={form.contact?.whatsapp}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, ''); // Numeric only
+                      if (val.length <= 13) {
+                        setForm({...form, contact: {...form.contact, whatsapp: val}});
+                      }
+                    }}
+                    placeholder="919657459908" 
+                    className={`w-full pl-14 pr-6 py-4 bg-slate-50 border rounded-2xl font-bold text-sm text-slate-700 outline-none transition-all ${!isWhatsappValid ? 'border-red-500 ring-4 ring-red-500/10' : 'border-slate-100 focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/5'}`}
+                  />
+                </div>
+              </div>
+              <p className={`text-[10px] font-bold pl-1 transition-colors ${!isWhatsappValid ? 'text-red-500' : 'text-slate-400'}`}>
+                {isWhatsappValid ? 'Format: 919876543210 (Digits only, includes country code)' : 'Invalid Format: Must be 10-13 digits with country code'}
+              </p>
+            </div>
             <InputGroup 
               label="Contact Phone" 
               icon={Phone} 

@@ -1,8 +1,10 @@
 // src/pages/Contact.jsx
 import { Store, MapPin, Phone, Clock, MessageSquare, Send } from 'lucide-react';
 import React, { useState } from 'react';
+import { useStore } from '../context/StoreContext';
 
 const Contact = () => {
+  const { storeSettings } = useStore();
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
 
   const handleInputChange = (e) => {
@@ -13,7 +15,11 @@ const Contact = () => {
   const handleSendMessage = (e) => {
     e.preventDefault();
     if(!formData.name || !formData.message) return;
-    const phone = '919876543210';
+    
+    const rawWa = storeSettings?.contact?.whatsapp || '919657459908';
+    const waNumber = rawWa.replace(/\D/g, '');
+    const phone = waNumber.length === 10 ? `91${waNumber}` : waNumber;
+    
     const text = `*New Contact Message*\n\n*Name:* ${formData.name}\n*Email:* ${formData.email}\n*Message:* ${formData.message}`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   };
@@ -39,42 +45,45 @@ const Contact = () => {
                 <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center">
                   <Store size={20} className="text-primary-600" />
                 </div>
-                <h2 className="text-xl font-bold text-forest">Local Grocery</h2>
+                <h2 className="text-xl font-bold text-forest">{storeSettings?.identity?.name || 'Local Grocery'}</h2>
               </div>
               
               <ul className="space-y-6 relative z-10">
                 <li className="flex items-start gap-4">
                   <MapPin size={20} className="text-saffron-500 mt-1 flex-shrink-0" />
                   <div>
-                    <h3 className="font-semibold text-gray-800 text-sm mb-1">Main Market Road</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">Block C, Heritage Square, Pune 411001</p>
+                    <h3 className="font-semibold text-gray-800 text-sm mb-1">{storeSettings?.identity?.tagline || 'Main Market Road'}</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed">{storeSettings?.location?.address || 'Heritage Square, Kolhapur'}</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-4">
                   <Phone size={20} className="text-saffron-500 mt-1 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold text-gray-800 leading-relaxed">+91 98765 43210</p>
-                    <p className="text-sm font-semibold text-gray-800 leading-relaxed">+91 98765 43210</p>
+                    <p className="text-sm font-semibold text-gray-800 leading-relaxed">{storeSettings?.contact?.phone || '+91 96574 59908'}</p>
+                    <p className="text-sm text-gray-400 text-[10px] uppercase font-bold tracking-widest mt-1">Direct Business Line</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-4">
                   <Clock size={20} className="text-saffron-500 mt-1 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold text-gray-800 leading-relaxed">Mon–Sat: 8am–9pm</p>
-                    <p className="text-sm font-semibold text-gray-800 leading-relaxed">Sun: 9am–6pm</p>
+                    <p className="text-sm font-semibold text-gray-800 leading-relaxed">Mon–Sat: {storeSettings?.businessHours?.weekdays || '8am–9pm'}</p>
+                    <p className="text-sm font-semibold text-gray-800 leading-relaxed">Sun: {storeSettings?.businessHours?.weekends || '9am–6pm'}</p>
                   </div>
                 </li>
               </ul>
             </div>
 
             {/* WhatsApp Direct */}
-            <a href="https://wa.me/919876543210" target="_blank" rel="noreferrer" className="block bg-primary-500 hover:bg-primary-600 rounded-3xl p-8 transition-colors group cursor-pointer shadow-green">
+            <button 
+              onClick={handleSendMessage}
+              className="w-full text-left block bg-primary-500 hover:bg-primary-600 rounded-3xl p-8 transition-colors group cursor-pointer shadow-green"
+            >
               <div className="flex items-center gap-3 mb-2">
                 <MessageSquare size={24} className="text-white" />
                 <h2 className="text-xl font-bold text-white group-hover:underline">Chat with us on WhatsApp</h2>
               </div>
               <p className="text-primary-50 text-sm">Fastest way to reach us — typically responds in minutes</p>
-            </a>
+            </button>
 
             {/* Our Story Outline */}
             <div className="bg-transparent p-6 rounded-3xl relative overflow-hidden">
@@ -93,15 +102,27 @@ const Contact = () => {
           {/* Right Column */}
           <div className="lg:col-span-7 space-y-6">
             
-            {/* Map Placeholder */}
+            {/* Map Interaction */}
             <div className="w-full h-[300px] bg-primary-100 rounded-3xl overflow-hidden relative border border-gray-100">
-               <div className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-multiply" style={{backgroundImage: "url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%25%22 height=%22100%25%22><defs><pattern id=%22grid%22 width=%2240%22 height=%2240%22 patternUnits=%22userSpaceOnUse%22><path d=%22M 40 0 L 0 0 0 40%22 fill=%22none%22 stroke=%22%2322c55e%22 stroke-width=%221%22 opacity=%220.3%22/></pattern></defs><rect width=%22100%25%22 height=%22100%25%22 fill=%22url(%23grid)%22 /></svg>')"}}></div>
-               <div className="absolute inset-0 flex items-center justify-center">
-                 <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-lg transform -translate-y-4">
-                   <div className="w-4 h-4 bg-primary-500 rounded-full animate-ping absolute"></div>
-                   <MapPin size={24} className="text-primary-600 relative z-10" />
-                 </div>
-               </div>
+               {storeSettings?.location?.mapEmbedUrl ? (
+                 <iframe 
+                   title="Store Location"
+                   src={storeSettings.location.mapEmbedUrl}
+                   className="w-full h-full border-0"
+                   allowFullScreen=""
+                   loading="lazy"
+                 ></iframe>
+               ) : (
+                 <>
+                   <div className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-multiply" style={{backgroundImage: "url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%25%22 height=%22100%25%22><defs><pattern id=%22grid%22 width=%2240%22 height=%2240%22 patternUnits=%22userSpaceOnUse%22><path d=%22M 40 0 L 0 0 0 40%22 fill=%22none%22 stroke=%22%2322c55e%22 stroke-width=%221%22 opacity=%220.3%22/></pattern></defs><rect width=%22100%25%22 height=%22100%25%22 fill=%22url(%23grid)%22 /></svg>')"}}></div>
+                   <div className="absolute inset-0 flex items-center justify-center">
+                     <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-lg transform -translate-y-4">
+                       <div className="w-4 h-4 bg-primary-500 rounded-full animate-ping absolute"></div>
+                       <MapPin size={24} className="text-primary-600 relative z-10" />
+                     </div>
+                   </div>
+                 </>
+               )}
             </div>
 
             {/* Contact Form */}
