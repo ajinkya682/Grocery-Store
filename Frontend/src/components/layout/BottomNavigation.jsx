@@ -9,7 +9,6 @@ const navItems = [
   { label: 'Shop', path: '/products', icon: Grid },
   { label: 'Cart', path: '/cart', icon: ShoppingCart, isCart: true },
   { label: 'Orders', path: '/orders', icon: ClipboardList },
-  { label: 'Profile', path: '/profile', icon: User },
 ];
 
 const BottomNavigation = () => {

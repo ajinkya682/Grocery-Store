@@ -1,7 +1,7 @@
 // src/components/layout/Navbar.jsx
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Leaf, Phone, User, Search as SearchIcon, X as CloseIcon, ShoppingCart } from "lucide-react";
+import { Leaf, Phone, User, Search as SearchIcon, X as CloseIcon, ShoppingCart, ShoppingBag, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../../context/CartContext";
 import { useStore } from "../../context/StoreContext";
