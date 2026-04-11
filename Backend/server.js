@@ -16,7 +16,12 @@ const startServer = async () => {
   await seedDefaultCategories();
 
   const server = app.listen(PORT, () => {
-    logger.info(`🚀 Server running on http://localhost:${PORT} [${process.env.NODE_ENV || 'development'}]`);
+    const mode = process.env.NODE_ENV || 'development';
+    if (mode === 'development') {
+      logger.info(`🚀 Server running on http://localhost:${PORT} [${mode}]`);
+    } else {
+      logger.info(`🚀 Server running in ${mode} mode on port ${PORT}`);
+    }
   });
 
   // ─── Graceful Shutdown ────────────────────────────────────────────────────

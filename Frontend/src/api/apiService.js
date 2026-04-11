@@ -4,7 +4,17 @@
 
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const isProd = import.meta.env.PROD;
+const VITE_API_URL = import.meta.env.VITE_API_URL;
+
+// Production Safeguard: Never default to localhost if built for production
+const BASE_URL = VITE_API_URL || (isProd ? '' : 'http://localhost:5001/api');
+
+if (!VITE_API_URL && isProd) {
+  console.error('❌ CONFIG ERROR: VITE_API_URL is not set in production. API calls will fail.');
+}
+
+console.log(`[API Service] Target: ${BASE_URL || 'RELATIVE'} | Mode: ${isProd ? 'Production' : 'Development'}`);
 
 // ─── Axios Instance ───────────────────────────────────────────────────────────
 const api = axios.create({

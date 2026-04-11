@@ -14,7 +14,7 @@ const { morganMiddleware } = require('../utils/logger');
 // Parse allowed origins from env
 const parseOrigins = () => {
   const raw = process.env.ALLOWED_ORIGINS || 'http://localhost:5173';
-  return raw.split(',').map((o) => o.trim());
+  return raw.split(',').map((o) => o.trim().replace(/\/$/, '').toLowerCase());
 };
 
 // ─── Global Rate Limiter ──────────────────────────────────────────────────────
@@ -57,8 +57,10 @@ const applySecurityMiddleware = (app) => {
     cors({
       origin: (origin, cb) => {
         const allowed = parseOrigins();
+        const incomingOrigin = origin ? origin.replace(/\/$/, '').toLowerCase() : null;
+        
         // Allow Postman / curl (no origin) in development
-        if (!origin || allowed.includes(origin) || process.env.NODE_ENV === 'development') {
+        if (!incomingOrigin || allowed.includes(incomingOrigin) || process.env.NODE_ENV === 'development') {
           cb(null, true);
         } else {
           cb(new Error(`CORS: Origin ${origin} not allowed`));
