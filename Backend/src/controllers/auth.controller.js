@@ -36,11 +36,15 @@ const register = async (req, res, next) => {
 
     // Clean payload of empty strings to avoid unique index collisions with sparse indexes
     const cleanedData = { name, password, address, pincode, role };
-    if (email && email.trim() !== '') cleanedData.email = email.toLowerCase().trim();
+
+    // For user role, email is NOT required — strip it even if auto-filled by the browser
+    if (role !== 'user' && email && email.trim() !== '') {
+      cleanedData.email = email.toLowerCase().trim();
+    }
     if (mobile && mobile.trim() !== '') cleanedData.mobile = mobile.trim();
 
     // ─── Uniqueness Checks ────────────────────────────────────────────────────
-    // Check Email
+    // Check Email (only relevant for admin registration)
     if (cleanedData.email) {
       const existingEmail = await User.findOne({ email: cleanedData.email });
       if (existingEmail) {
@@ -48,7 +52,7 @@ const register = async (req, res, next) => {
       }
     }
 
-    // Check Mobile
+    // Check Mobile (for customer accounts)
     if (cleanedData.mobile) {
       const existingMobile = await User.findOne({ mobile: cleanedData.mobile });
       if (existingMobile) {
