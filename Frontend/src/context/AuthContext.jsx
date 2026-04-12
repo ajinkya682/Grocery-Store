@@ -51,16 +51,27 @@ export const AuthProvider = ({ children }) => {
   // ─── Register ─────────────────────────────────────────────────────────────────
   const registerUser = async (userData) => {
     try {
+      const role = userData.role || 'user';
+
       // Map 'pin' to 'password' for backend consistency
       const payload = { 
         ...userData, 
         password: userData.pin || userData.password,
-        role: userData.role || 'user'
+        role,
       };
 
-      // Remove empty strings to avoid unique index collisions in Mongo
+      // For customer accounts: forcibly strip email & pin fields
+      // This prevents browser auto-fill from sending admin@ email and causing 409
+      if (role === 'user') {
+        delete payload.email;
+        delete payload.pin;
+      }
+
+      // Remove any remaining empty strings to avoid sparse index collisions
       Object.keys(payload).forEach(key => {
-        if (payload[key] === '') delete payload[key];
+        if (payload[key] === '' || payload[key] === null || payload[key] === undefined) {
+          delete payload[key];
+        }
       });
 
       const { data } = await authAPI.register(payload);
@@ -71,19 +82,16 @@ export const AuthProvider = ({ children }) => {
       
       // Handle Conflict (409) specifically
       if (err.response?.status === 409) {
-        if (message.includes('Mobile')) {
-             message = 'Mobile number already registered. Please sign in instead.';
-        } else if (message.includes('Email')) {
-             message = 'Email address already registered. Please sign in instead.';
+        if (message.toLowerCase().includes('mobile')) {
+          message = 'Mobile number already registered. Please sign in instead.';
+        } else if (message.toLowerCase().includes('email')) {
+          message = 'Email address already registered. Please sign in instead.';
         } else {
-             message = 'Account already exists. Try signing in.';
+          message = 'Account already exists. Try signing in.';
         }
       }
 
-      return {
-        success: false,
-        message,
-      };
+      return { success: false, message };
     }
   };
 

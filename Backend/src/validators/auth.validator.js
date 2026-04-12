@@ -12,7 +12,12 @@ const registerRules = [
     .optional()
     .isIn(['user', 'admin']).withMessage('Invalid role'),
 
+  // Strip email entirely for user-role registrations (prevents browser auto-fill 409 conflicts)
   body('email')
+    .customSanitizer((value, { req }) => {
+      if (req.body.role !== 'admin') return undefined; // discard for non-admin
+      return value;
+    })
     .if((value, { req }) => req.body.role === 'admin')
     .trim()
     .notEmpty().withMessage('Email is required for administrator accounts')
