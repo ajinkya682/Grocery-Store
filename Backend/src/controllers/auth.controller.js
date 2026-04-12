@@ -32,37 +32,43 @@ const sendTokenResponse = (user, statusCode, res) => {
 // ─── POST /api/auth/register ──────────────────────────────────────────────────
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, mobile, address, pincode, role = 'user' } = req.body;
+    const role = (req.body.role || 'user').toLowerCase();
 
-    // Clean payload of empty strings to avoid unique index collisions with sparse indexes
-    const cleanedData = { name, password, address, pincode, role };
+    // ─── Log received payload for debugging (redact password) ─────────────────
+    logger.info(`[register] role=${role} body_keys=${Object.keys(req.body).join(',')}`);
 
-    // For user role, email is NOT required — strip it even if auto-filled by the browser
-    if (role !== 'user' && email && email.trim() !== '') {
-      cleanedData.email = email.toLowerCase().trim();
-    }
-    if (mobile && mobile.trim() !== '') cleanedData.mobile = mobile.trim();
+    // ─── Build a strictly role-scoped payload ─────────────────────────────────
+    // Customer accounts: ONLY mobile — email is NEVER stored/checked for users
+    // Admin accounts:    ONLY email  — mobile is not required
+    let cleanedData;
 
-    // ─── Uniqueness Checks ────────────────────────────────────────────────────
-    // Check Email (only relevant for admin registration)
-    if (cleanedData.email) {
-      const existingEmail = await User.findOne({ email: cleanedData.email });
-      if (existingEmail) {
-        throw new ConflictError('Email address already registered', 'EMAIL_TAKEN');
+    if (role === 'admin') {
+      const { name, email, password, address, pincode } = req.body;
+      if (!email || email.trim() === '') {
+        throw new ConflictError('Email is required for admin accounts', 'EMAIL_REQUIRED');
       }
-    }
-
-    // Check Mobile (for customer accounts)
-    if (cleanedData.mobile) {
-      const existingMobile = await User.findOne({ mobile: cleanedData.mobile });
-      if (existingMobile) {
-        throw new ConflictError('Mobile number already registered', 'MOBILE_TAKEN');
+      const normalizedEmail = email.toLowerCase().trim();
+      const existing = await User.findOne({ email: normalizedEmail });
+      if (existing) throw new ConflictError('Email address already registered', 'EMAIL_TAKEN');
+      cleanedData = { name, email: normalizedEmail, password, role: 'admin' };
+      if (address) cleanedData.address = address;
+      if (pincode) cleanedData.pincode = pincode;
+    } else {
+      // role === 'user' — email is completely ignored regardless of what was sent
+      const { name, password, mobile, address, pincode } = req.body;
+      if (!mobile || mobile.trim() === '') {
+        throw new ConflictError('Mobile number is required for customer accounts', 'MOBILE_REQUIRED');
       }
+      const normalizedMobile = mobile.trim();
+      const existing = await User.findOne({ mobile: normalizedMobile });
+      if (existing) throw new ConflictError('Mobile number already registered', 'MOBILE_TAKEN');
+      cleanedData = { name, password, mobile: normalizedMobile, role: 'user' };
+      if (address) cleanedData.address = address;
+      if (pincode) cleanedData.pincode = pincode;
     }
 
     const user = await User.create(cleanedData);
-
-    logger.info(`New ${role} registered: ${email || mobile}`);
+    logger.info(`[register] New ${role} registered: ${cleanedData.email || cleanedData.mobile}`);
     sendTokenResponse(user, 201, res);
   } catch (err) {
     next(err);
