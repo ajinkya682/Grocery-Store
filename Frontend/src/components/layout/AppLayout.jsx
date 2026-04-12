@@ -22,10 +22,13 @@ const AppLayout = ({ children }) => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
+  // Auth pages are fullscreen standalone — hide Navbar / Footer / BottomNav
+  const isStandalonePage = ['/userlogin', '/adminlogin'].includes(location.pathname);
+
   return (
     <div className="flex flex-col min-h-screen bg-light">
       {/* Global Header - adapts internally */}
-      <Navbar isMobile={isMobile} />
+      {!isStandalonePage && <Navbar isMobile={isMobile} />}
 
       {/* Main Content Area */}
       <main className={`flex-grow transition-all duration-300 ${isMobile ? 'pb-24' : 'pb-0'}`}>
@@ -43,13 +46,13 @@ const AppLayout = ({ children }) => {
       </main>
 
       {/* Footer - only on desktop or specific pages */}
-      {!isMobile && <Footer />}
+      {!isStandalonePage && !isMobile && <Footer />}
 
       {/* Cart Overlay (Bottom Sheet / Drawer) */}
       <AdaptiveCart />
 
       {/* Mobile-only Bottom Navigation */}
-      {isMobile && <BottomNavigation />}
+      {!isStandalonePage && isMobile && <BottomNavigation />}
     </div>
   );
 };
