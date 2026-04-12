@@ -39,13 +39,21 @@ const register = async (req, res, next) => {
     if (email && email.trim() !== '') cleanedData.email = email.toLowerCase().trim();
     if (mobile && mobile.trim() !== '') cleanedData.mobile = mobile.trim();
 
-    // Check for existing by unique identifier
-    if (role === 'admin' && cleanedData.email) {
-       const existing = await User.findOne({ email: cleanedData.email });
-       if (existing) throw new ConflictError('Email already registered', 'EMAIL_TAKEN');
-    } else if (cleanedData.mobile) {
-       const existing = await User.findOne({ mobile: cleanedData.mobile });
-       if (existing) throw new ConflictError('Mobile number already registered', 'MOBILE_TAKEN');
+    // ─── Uniqueness Checks ────────────────────────────────────────────────────
+    // Check Email
+    if (cleanedData.email) {
+      const existingEmail = await User.findOne({ email: cleanedData.email });
+      if (existingEmail) {
+        throw new ConflictError('Email address already registered', 'EMAIL_TAKEN');
+      }
+    }
+
+    // Check Mobile
+    if (cleanedData.mobile) {
+      const existingMobile = await User.findOne({ mobile: cleanedData.mobile });
+      if (existingMobile) {
+        throw new ConflictError('Mobile number already registered', 'MOBILE_TAKEN');
+      }
     }
 
     const user = await User.create(cleanedData);

@@ -83,7 +83,18 @@ const UserLogin = () => {
         } else {
           // Register logic
           if (formData.mobile.length !== 10) throw new Error('Mobile number must be 10 digits');
-          const res = await registerUser(formData);
+          
+          // Construct lean registration data to avoid pollution from auto-fill or role switches
+          const registrationData = {
+            name: formData.name,
+            mobile: formData.mobile,
+            address: formData.address,
+            pincode: formData.pincode,
+            pin: formData.pin,
+            role: 'user'
+          };
+          
+          const res = await registerUser(registrationData);
           if (res.success) navigate(from, { replace: true });
           else setError(res.message);
         }
@@ -165,13 +176,23 @@ const UserLogin = () => {
           {/* Role Toggle */}
           <div className="bg-gray-100/80 p-1.5 rounded-2xl flex items-center mb-10 overflow-hidden border border-gray-200/50">
             <button 
-              onClick={() => { setRole('user'); setError(''); }}
+              onClick={() => { 
+                setRole('user'); 
+                setError('');
+                // Safety: Clear admin fields when switching to customer
+                setFormData(prev => ({ ...prev, email: '', password: '' }));
+              }}
               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all ${role === 'user' ? 'bg-white text-forest shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
             >
               <User size={14} /> Customer
             </button>
             <button 
-              onClick={() => { setRole('admin'); setError(''); }}
+              onClick={() => { 
+                setRole('admin'); 
+                setError(''); 
+                // Safety: Clear customer secret fields when switching to admin
+                setFormData(prev => ({ ...prev, mobile: '', pin: '' }));
+              }}
               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all ${role === 'admin' ? 'bg-[#0F172A] text-white shadow-xl shadow-slate-900/10' : 'text-gray-400 hover:text-gray-600'}`}
             >
               <Store size={14} /> Store Owner
