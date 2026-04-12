@@ -49,19 +49,26 @@ const register = async (req, res, next) => {
       }
       const normalizedEmail = email.toLowerCase().trim();
       const existing = await User.findOne({ email: normalizedEmail });
-      if (existing) throw new ConflictError('Email address already registered', 'EMAIL_TAKEN');
+      if (existing) {
+        logger.warn(`[register] Conflict: Admin email already registered: ${normalizedEmail}`);
+        throw new ConflictError('Email address already registered', 'EMAIL_TAKEN');
+      }
       cleanedData = { name, email: normalizedEmail, password, role: 'admin' };
       if (address) cleanedData.address = address;
       if (pincode) cleanedData.pincode = pincode;
     } else {
-      // role === 'user' — email is completely ignored regardless of what was sent
+      // role === 'user' — email is completely ignored and stripped
       const { name, password, mobile, address, pincode } = req.body;
       if (!mobile || mobile.trim() === '') {
         throw new ConflictError('Mobile number is required for customer accounts', 'MOBILE_REQUIRED');
       }
       const normalizedMobile = mobile.trim();
       const existing = await User.findOne({ mobile: normalizedMobile });
-      if (existing) throw new ConflictError('Mobile number already registered', 'MOBILE_TAKEN');
+      if (existing) {
+        logger.warn(`[register] Conflict: Customer mobile already registered: ${normalizedMobile}`);
+        throw new ConflictError('Mobile number already registered', 'MOBILE_TAKEN');
+      }
+      // Explicitly excluded 'email' from cleanedData to prevent collisions
       cleanedData = { name, password, mobile: normalizedMobile, role: 'user' };
       if (address) cleanedData.address = address;
       if (pincode) cleanedData.pincode = pincode;

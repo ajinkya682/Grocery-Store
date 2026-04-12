@@ -73,8 +73,18 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// ─── Verification Logic: Role-based identity ──────────────────────────────────
+// ─── Verification & Sanitization Logic: Role-based identity ───────────────────
 userSchema.pre('validate', function(next) {
+  // Strip email for customer accounts to prevent sparse index collisions from browser auto-fill
+  if (this.role === ROLES.USER) {
+    this.email = undefined;
+  }
+
+  // Convert empty strings to undefined for sparse index safety (global)
+  if (this.email === '') this.email = undefined;
+  if (this.mobile === '') this.mobile = undefined;
+
+  // Manual validation logic
   if (this.role === ROLES.ADMIN && !this.email) {
     this.invalidate('email', 'Email is required for administrator accounts.');
   }

@@ -67,9 +67,10 @@ export const AuthProvider = ({ children }) => {
         delete payload.pin;
       }
 
-      // Remove any remaining empty strings to avoid sparse index collisions
+      // Final strict cleaning: Remove any falsy values (except numeric 0)
+      // This ensures we never send empty strings "" which can trigger non-sparse unique index collisions
       Object.keys(payload).forEach(key => {
-        if (payload[key] === '' || payload[key] === null || payload[key] === undefined) {
+        if (!payload[key] && payload[key] !== 0) {
           delete payload[key];
         }
       });
@@ -78,16 +79,19 @@ export const AuthProvider = ({ children }) => {
       storeAuthData(data.data.user, data.data.accessToken, data.data.refreshToken);
       return { success: true };
     } catch (err) {
-      let message = err.response?.data?.message || 'Registration failed';
+      const respData = err.response?.data;
+      let message = respData?.message || 'Registration failed';
       
-      // Handle Conflict (409) specifically
+      // Handle Conflict (409) specifically with better granularity
       if (err.response?.status === 409) {
-        if (message.toLowerCase().includes('mobile')) {
+        const lowerMsg = message.toLowerCase();
+        if (lowerMsg.includes('mobile')) {
           message = 'Mobile number already registered. Please sign in instead.';
-        } else if (message.toLowerCase().includes('email')) {
+        } else if (lowerMsg.includes('email')) {
           message = 'Email address already registered. Please sign in instead.';
-        } else {
-          message = 'Account already exists. Try signing in.';
+        } else if (respData?.errorCode === 'DUPLICATE_FIELD') {
+          // If the error code is DUPLICATE_FIELD but message is generic, try to be helpful
+          message = 'Account already exists with these details. Please sign in.';
         }
       }
 

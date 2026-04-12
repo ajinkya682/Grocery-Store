@@ -210,7 +210,7 @@ const UserLogin = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
             <AnimatePresence mode="wait">
               {role === 'admin' ? (
                 <motion.div
@@ -226,6 +226,7 @@ const UserLogin = () => {
                       type="email"
                       name="email"
                       required
+                      autoComplete="username"
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="admin@shop.com"
@@ -238,6 +239,7 @@ const UserLogin = () => {
                       type="password"
                       name="password"
                       required
+                      autoComplete="current-password"
                       value={formData.password}
                       onChange={handleInputChange}
                       placeholder="••••••••"
@@ -260,6 +262,7 @@ const UserLogin = () => {
                         type="text"
                         name="name"
                         required
+                        autoComplete="name"
                         value={formData.name}
                         onChange={handleInputChange}
                         placeholder="Ex: Rajesh P."
@@ -267,7 +270,7 @@ const UserLogin = () => {
                       />
                     </div>
                   )}
-
+ 
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1">Mobile Access</label>
                     <div className="relative">
@@ -276,6 +279,7 @@ const UserLogin = () => {
                         type="tel"
                         name="mobile"
                         required
+                        autoComplete={isLogin ? "username tel" : "tel"}
                         value={formData.mobile}
                         onChange={handleInputChange}
                         placeholder="9876543210"
@@ -284,7 +288,7 @@ const UserLogin = () => {
                       />
                     </div>
                   </div>
-
+ 
                   {!isLogin && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -292,6 +296,7 @@ const UserLogin = () => {
                         <input
                           name="address"
                           required
+                          autoComplete="address-level2"
                           value={formData.address}
                           onChange={handleInputChange}
                           placeholder="Ex: Rajarampuri"
@@ -304,6 +309,7 @@ const UserLogin = () => {
                           type="number"
                           name="pincode"
                           required
+                          autoComplete="postal-code"
                           value={formData.pincode}
                           onChange={handleInputChange}
                           placeholder="416008"
@@ -312,7 +318,7 @@ const UserLogin = () => {
                       </div>
                     </div>
                   )}
-
+ 
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1">6-Digit PIN</label>
                     <div className="relative">
@@ -320,6 +326,7 @@ const UserLogin = () => {
                         type={showPin ? 'text' : 'password'}
                         name="pin"
                         required
+                        autoComplete={isLogin ? "current-password" : "new-password"}
                         value={formData.pin}
                         onChange={handleInputChange}
                         placeholder="••••••"
@@ -338,14 +345,14 @@ const UserLogin = () => {
                 </motion.div>
               )}
             </AnimatePresence>
-
+ 
             {error && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                 <p className="text-red-600 text-[11px] font-black uppercase tracking-wider">{error}</p>
               </motion.div>
             )}
-
+ 
             <button
               type="submit"
               disabled={isLoading}
