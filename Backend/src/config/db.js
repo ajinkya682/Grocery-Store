@@ -7,6 +7,43 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/grocer
 
 let isConnected = false;
 
+const repairIndexes = async () => {
+  try {
+    const db = mongoose.connection.db;
+    const usersCollection = db.collection('users');
+    
+    logger.info('🔍 [IndexRepair] Checking for stale indexes...');
+
+    // Attempt to drop email_1 index
+    try {
+      await usersCollection.dropIndex('email_1');
+      logger.info('✅ [IndexRepair] email_1 dropped successfully (will be rebuilt as sparse)');
+    } catch (e) {
+      if (e.codeName === 'IndexNotFound') {
+        logger.info('ℹ️ [IndexRepair] email_1 not found, no drop needed');
+      } else {
+        logger.warn(`⚠️ [IndexRepair] Warning dropping email_1: ${e.message}`);
+      }
+    }
+
+    // Attempt to drop mobile_1 index
+    try {
+      await usersCollection.dropIndex('mobile_1');
+      logger.info('✅ [IndexRepair] mobile_1 dropped successfully (will be rebuilt as sparse)');
+    } catch (e) {
+      if (e.codeName === 'IndexNotFound') {
+        logger.info('ℹ️ [IndexRepair] mobile_1 not found, no drop needed');
+      } else {
+        logger.warn(`⚠️ [IndexRepair] Warning dropping mobile_1: ${e.message}`);
+      }
+    }
+
+    logger.info('🚀 [IndexRepair] Cleanup complete. Mongoose will now rebuild indexes.');
+  } catch (err) {
+    logger.error(`❌ [IndexRepair] Fatal error during index repair: ${err.message}`);
+  }
+};
+
 const connectDB = async () => {
   if (isConnected) return;
 
@@ -19,6 +56,9 @@ const connectDB = async () => {
 
     isConnected = true;
     logger.info(`✅ MongoDB Connected: ${conn.connection.host}`);
+    
+    // Trigger index repair one-time on startup to fix stale non-sparse indexes
+    await repairIndexes();
   } catch (err) {
     logger.error(`❌ MongoDB connection failed: ${err.message}`);
     // Exit process with failure — process managers (PM2, Docker) will restart
