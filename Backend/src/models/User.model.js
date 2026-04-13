@@ -98,6 +98,9 @@ userSchema.pre('validate', function(next) {
 userSchema.pre('save', async function (next) {
   // Redundant safety: Ensure email is never stored for users to prevent 409 conflicts
   if (this.role === ROLES.USER) {
+    if (this.email !== undefined) {
+      logger.info(`[User.model.pre-save] STRICT STRIPPING: Role=${this.role} CurrentEmail="${this.email}" (Type: ${typeof this.email})`);
+    }
     this.email = undefined;
   }
 

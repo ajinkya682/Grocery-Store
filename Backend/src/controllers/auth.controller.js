@@ -78,7 +78,11 @@ const register = async (req, res, next) => {
     logger.info(`[register] SUCCESS: ${role} created. Mobile=${cleanedData.mobile || 'N/A'} Email=${cleanedData.email || 'N/A'}`);
     sendTokenResponse(user, 201, res);
   } catch (err) {
-    logger.error(`[register] ERROR: ${err.message}`);
+    if (err.code === 11000) {
+      logger.error(`[register] CONFLICT DETECTED: req.body.mobile=${req.body.mobile} keyValue=${JSON.stringify(err.keyValue)}`);
+    } else {
+      logger.error(`[register] ERROR: ${err.message}`);
+    }
     next(err);
   }
 };

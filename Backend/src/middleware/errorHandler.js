@@ -12,6 +12,8 @@ const handleCastError = (err) =>
 
 const handleDuplicateKeyError = (err) => {
   const field = Object.keys(err.keyValue)[0];
+  const value = err.keyValue[field];
+  logger.error(`[DuplicateKeyError] Field: ${field}, Value: ${value}`);
   return new AppError(
     `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`,
     409,
