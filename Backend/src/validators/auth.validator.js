@@ -49,4 +49,20 @@ const refreshTokenRules = [
     .notEmpty().withMessage('Refresh token is required'),
 ];
 
-module.exports = { registerRules, loginRules, refreshTokenRules };
+const resetPinRules = [
+  body('name')
+    .trim()
+    .notEmpty().withMessage('Name is required')
+    .isLength({ min: 2, max: 60 }).withMessage('Name must be 2–60 characters'),
+
+  body('mobile')
+    .trim()
+    .notEmpty().withMessage('Mobile number is required')
+    .matches(/^[0-9]{10}$/).withMessage('Mobile must be 10 digits'),
+
+  body('newPin')
+    .notEmpty().withMessage('New PIN is required')
+    .isLength({ min: 6 }).withMessage('PIN must be at least 6 characters'),
+];
+
+module.exports = { registerRules, loginRules, refreshTokenRules, resetPinRules };

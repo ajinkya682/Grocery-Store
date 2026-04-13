@@ -8,7 +8,9 @@ import Contact from './pages/Contact';
 import SearchResults from './pages/SearchResults';
 import ProductDetails from './pages/ProductDetails';
 import OurMasalas from './pages/OurMasalas';
-import UserLogin from './pages/UserLogin';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPin from './pages/ForgotPin';
 import AdminLogin from './pages/AdminLogin';
 import Orders from './pages/Orders';
 
@@ -18,7 +20,7 @@ import DashboardOverview from './pages/admin/DashboardOverview';
 import ManageProducts from './pages/admin/ManageProducts';
 import ManageOrders from './pages/admin/ManageOrders';
 import ManageSettings from './pages/admin/ManageSettings';
-import ProtectedRoute from './components/admin/ProtectedRoute';
+import { ProtectedRoute } from './components/admin/ProtectedRoute';
 import { CartProvider } from './context/CartContext';
 import { StoreProvider } from './context/StoreContext';
 import { AuthProvider } from './context/AuthContext';
@@ -44,7 +46,9 @@ function App() {
                       <Route path="/product/:id" element={<ProductDetails />} />
                       <Route path="/search" element={<SearchResults />} />
                       <Route path="/our-masalas" element={<OurMasalas />} />
-                      <Route path="/userlogin" element={<UserLogin />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/forgot-pin" element={<ForgotPin />} />
                       <Route path="/orders" element={<Orders />} />
                     </Routes>
                   </AppLayout>

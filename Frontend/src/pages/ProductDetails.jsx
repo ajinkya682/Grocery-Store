@@ -40,7 +40,7 @@ const ProductDetails = () => {
 
   const handleAddToCart = () => {
     if (!isUserAuthenticated) {
-      navigate('/userlogin', { state: { from: location.pathname } });
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
 
@@ -57,7 +57,7 @@ const ProductDetails = () => {
 
   const handleWhatsAppOrder = () => {
     if (!isUserAuthenticated) {
-      navigate('/userlogin', { state: { from: location.pathname } });
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
     orderViaWhatsApp();

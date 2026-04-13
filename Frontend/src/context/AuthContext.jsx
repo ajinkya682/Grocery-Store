@@ -141,6 +141,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ─── Reset PIN ────────────────────────────────────────────────────────────────
+  const resetPin = async (name, mobile, newPin) => {
+    try {
+      const { data } = await authAPI.resetPin({ name, mobile, newPin });
+      return { success: true, message: data.message };
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || 'Failed to reset PIN. Please try again.',
+      };
+    }
+  };
+
   // ─── Logout ───────────────────────────────────────────────────────────────────
   const logoutUser = async () => {
     try { await authAPI.logout(); } catch { /* best-effort */ }
@@ -161,6 +174,7 @@ export const AuthProvider = ({ children }) => {
         logoutUser,
         loginAdmin,
         logoutAdmin,
+        resetPin,
       }}
     >
       {children}

@@ -1,4 +1,4 @@
-// src/pages/UserLogin.jsx
+// src/pages/Login.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,12 +6,10 @@ import {
   Phone, 
   Lock, 
   User, 
-  MapPin, 
   Eye, 
   EyeOff, 
   ArrowLeft, 
   Loader2, 
-  Sparkles, 
   Store, 
   ChevronRight,
   ShieldCheck,
@@ -21,14 +19,13 @@ import { useAuth } from '../context/AuthContext';
 import { useStore } from '../context/StoreContext';
 import { STORE_NAME } from '../config/constants';
 
-const UserLogin = () => {
+const Login = () => {
   const [role, setRole] = useState('user'); // 'user' or 'admin'
-  const [isLogin, setIsLogin] = useState(true);
   const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { loginUser, loginAdmin, registerUser, isUserAuthenticated, isAdminAuthenticated } = useAuth();
+  const { loginUser, loginAdmin, isUserAuthenticated, isAdminAuthenticated } = useAuth();
   const { storeSettings } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,11 +33,8 @@ const UserLogin = () => {
 
   // Form State
   const [formData, setFormData] = useState({
-    name: '',
     mobile: '',
     email: '', // for admin
-    address: '',
-    pincode: '',
     pin: '',
     password: '' // for admin
   });
@@ -59,7 +53,6 @@ const UserLogin = () => {
     // Mobile and PIN restrictions
     if (name === 'mobile' && value.length > 10) return;
     if (name === 'pin' && value.length > 6) return;
-    if (name === 'pincode' && value.length > 6) return;
     
     setFormData(prev => ({ ...prev, [name]: value }));
     setError('');
@@ -76,28 +69,9 @@ const UserLogin = () => {
         if (res.success) navigate('/admin');
         else setError(res.message);
       } else {
-        if (isLogin) {
-          const res = await loginUser(formData.mobile, formData.pin);
-          if (res.success) navigate(from, { replace: true });
-          else setError(res.message);
-        } else {
-          // Register logic
-          if (formData.mobile.length !== 10) throw new Error('Mobile number must be 10 digits');
-          
-          // Construct lean registration data to avoid pollution from auto-fill or role switches
-          const registrationData = {
-            name: formData.name,
-            mobile: formData.mobile,
-            address: formData.address,
-            pincode: formData.pincode,
-            pin: formData.pin,
-            role: 'user'
-          };
-          
-          const res = await registerUser(registrationData);
-          if (res.success) navigate(from, { replace: true });
-          else setError(res.message);
-        }
+        const res = await loginUser(formData.mobile, formData.pin);
+        if (res.success) navigate(from, { replace: true });
+        else setError(res.message);
       }
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.');
@@ -179,7 +153,6 @@ const UserLogin = () => {
               onClick={() => { 
                 setRole('user'); 
                 setError('');
-                // Safety: Clear admin fields when switching to customer
                 setFormData(prev => ({ ...prev, email: '', password: '' }));
               }}
               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all ${role === 'user' ? 'bg-white text-forest shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
@@ -190,7 +163,6 @@ const UserLogin = () => {
               onClick={() => { 
                 setRole('admin'); 
                 setError(''); 
-                // Safety: Clear customer secret fields when switching to admin
                 setFormData(prev => ({ ...prev, mobile: '', pin: '' }));
               }}
               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all ${role === 'admin' ? 'bg-[#0F172A] text-white shadow-xl shadow-slate-900/10' : 'text-gray-400 hover:text-gray-600'}`}
@@ -201,12 +173,12 @@ const UserLogin = () => {
 
           <div className="mb-10">
             <h3 className="text-3xl font-display font-black text-slate-900 mb-2">
-              {role === 'admin' ? 'Owner Portal' : isLogin ? 'Glad you\'re here!' : 'Create Account'}
+              {role === 'admin' ? 'Owner Portal' : 'Glad you\'re here!'}
             </h3>
             <p className="text-slate-500 font-bold">
               {role === 'admin' 
                 ? 'Enter your administrative credentials to continue.' 
-                : isLogin ? 'Sign in to your account with your 10-digit mobile number' : 'Fill in the details below to start your journey.'}
+                : 'Sign in to your account with your 10-digit mobile number'}
             </p>
           </div>
 
@@ -255,22 +227,6 @@ const UserLogin = () => {
                   exit={{ opacity: 0, y: -10 }}
                   className="space-y-5"
                 >
-                  {!isLogin && (
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1">Full Name</label>
-                      <input
-                        type="text"
-                        name="name"
-                        required
-                        autoComplete="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        placeholder="Ex: Rajesh P."
-                        className="input-field"
-                      />
-                    </div>
-                  )}
- 
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1">Mobile Access</label>
                     <div className="relative">
@@ -279,7 +235,7 @@ const UserLogin = () => {
                         type="tel"
                         name="mobile"
                         required
-                        autoComplete={isLogin ? "username tel" : "tel"}
+                        autoComplete="username tel"
                         value={formData.mobile}
                         onChange={handleInputChange}
                         placeholder="9876543210"
@@ -289,36 +245,6 @@ const UserLogin = () => {
                     </div>
                   </div>
  
-                  {!isLogin && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1">City/Area</label>
-                        <input
-                          name="address"
-                          required
-                          autoComplete="address-level2"
-                          value={formData.address}
-                          onChange={handleInputChange}
-                          placeholder="Ex: Rajarampuri"
-                          className="input-field"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1">Pincode</label>
-                        <input
-                          type="number"
-                          name="pincode"
-                          required
-                          autoComplete="postal-code"
-                          value={formData.pincode}
-                          onChange={handleInputChange}
-                          placeholder="416008"
-                          className="input-field"
-                        />
-                      </div>
-                    </div>
-                  )}
- 
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1">6-Digit PIN</label>
                     <div className="relative">
@@ -326,7 +252,7 @@ const UserLogin = () => {
                         type={showPin ? 'text' : 'password'}
                         name="pin"
                         required
-                        autoComplete={isLogin ? "current-password" : "new-password"}
+                        autoComplete="current-password"
                         value={formData.pin}
                         onChange={handleInputChange}
                         placeholder="••••••"
@@ -341,6 +267,14 @@ const UserLogin = () => {
                         {showPin ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Link 
+                      to="/forgot-pin"
+                      className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline underline-offset-4"
+                    >
+                      Forgot PIN?
+                    </Link>
                   </div>
                 </motion.div>
               )}
@@ -362,7 +296,7 @@ const UserLogin = () => {
                 <Loader2 size={18} className="animate-spin" />
               ) : (
                 <>
-                  {role === 'admin' ? 'Access Dashboard' : isLogin ? 'Sign In Securely' : 'Complete Registration'}
+                  {role === 'admin' ? 'Access Dashboard' : 'Sign In Securely'}
                   <ChevronRight size={16} />
                 </>
               )}
@@ -371,16 +305,12 @@ const UserLogin = () => {
 
           {role === 'user' && (
             <div className="mt-10 text-center">
-              <button 
-                onClick={() => { setIsLogin(!isLogin); setError(''); }}
+              <Link 
+                to="/register"
                 className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-colors"
               >
-                {isLogin ? (
-                  <>Don't have an account? <span className="text-primary underline underline-offset-4 decoration-2">Create one</span></>
-                ) : (
-                  <>Already a member? <span className="text-primary underline underline-offset-4 decoration-2">Sign in</span></>
-                )}
-              </button>
+                Don't have an account? <span className="text-primary underline underline-offset-4 decoration-2">Create one</span>
+              </Link>
             </div>
           )}
 
@@ -402,5 +332,4 @@ const UserLogin = () => {
   );
 };
 
-export default UserLogin;
-
+export default Login;

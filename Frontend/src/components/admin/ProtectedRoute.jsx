@@ -18,7 +18,7 @@ const ProtectedRoute = ({ type = 'admin' }) => {
     return isAdminAuthenticated ? <Outlet /> : <Navigate to="/adminlogin" state={{ from: location }} replace />;
   }
 
-  return isUserAuthenticated ? <Outlet /> : <Navigate to="/userlogin" state={{ from: location }} replace />;
+  return isUserAuthenticated ? <Outlet /> : <Navigate to="/login" state={{ from: location }} replace />;
 };
 
 export default ProtectedRoute;

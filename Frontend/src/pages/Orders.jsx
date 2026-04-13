@@ -171,11 +171,12 @@ const Orders = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { isUserAuthenticated } = useAuth();
 
   useEffect(() => {
     if (!isUserAuthenticated) {
-      navigate('/userlogin');
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
 

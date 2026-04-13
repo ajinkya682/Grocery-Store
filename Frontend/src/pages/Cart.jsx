@@ -12,7 +12,7 @@ const Cart = () => {
 
   useEffect(() => {
     if (!isUserAuthenticated) {
-      navigate('/userlogin', { state: { from: location.pathname }, replace: true });
+      navigate('/login', { state: { from: location.pathname }, replace: true });
     }
   }, [isUserAuthenticated, navigate, location.pathname]);
 
@@ -135,7 +135,7 @@ const Cart = () => {
                      "{currentUser.address}, {currentUser.pincode}"
                    </p>
                  </div>
-                 <Link to="/userlogin" className="inline-block text-[10px] font-black uppercase tracking-widest text-accent hover:underline pt-2">
+                 <Link to="/login" className="inline-block text-[10px] font-black uppercase tracking-widest text-accent hover:underline pt-2">
                    Edit Profile Details
                  </Link>
                </div>

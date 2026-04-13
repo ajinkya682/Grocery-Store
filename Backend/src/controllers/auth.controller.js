@@ -175,16 +175,36 @@ const logout = async (req, res, next) => {
   }
 };
 
-// ─── GET /api/auth/me ─────────────────────────────────────────────────────────
-const getMe = async (req, res, next) => {
+// ─── POST /api/auth/reset-pin ────────────────────────────────────────────────
+const resetPin = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id);
-    if (!user) throw new NotFoundError('User', 'USER_NOT_FOUND');
+    const { name, mobile, newPin } = req.body;
 
-    res.status(200).json({ success: true, data: { user } });
+    // Find customer by mobile and name (case-insensitive for safety)
+    // We strictly use case-insensitive regex for name and exact match for mobile
+    const user = await User.findOne({
+      mobile: mobile.trim(),
+      name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
+      role: ROLES.USER
+    });
+
+    if (!user) {
+      throw new AuthError('No account found with matching Name and Mobile number.', 'USER_NOT_FOUND');
+    }
+
+    // Update PIN (password field)
+    user.password = newPin;
+    await user.save();
+
+    logger.info(`PIN reset successful for User: ${mobile}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'PIN updated successfully. Please login with your new PIN.'
+    });
   } catch (err) {
     next(err);
   }
 };
 
-module.exports = { register, login, refreshToken, logout, getMe };
+module.exports = { register, login, refreshToken, logout, getMe, resetPin };

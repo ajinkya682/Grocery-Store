@@ -71,7 +71,7 @@ api.interceptors.response.use(
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('currentUser');
-        window.location.href = '/userlogin';
+        window.location.href = '/login';
       }
     }
 
@@ -86,6 +86,7 @@ export const authAPI = {
   logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me'),
   refresh: (refreshToken) => api.post('/auth/refresh', { refreshToken }),
+  resetPin: (data) => api.post('/auth/reset-pin', data),
 };
 
 // ─── Products API ─────────────────────────────────────────────────────────────

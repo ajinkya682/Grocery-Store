@@ -88,7 +88,7 @@ const Navbar = ({ isMobile }) => {
 
   const handleCartClick = () => {
     if (!isUserAuthenticated) {
-      navigate('/userlogin', { state: { from: location.pathname } });
+      navigate('/login', { state: { from: location.pathname } });
     } else {
       openCart();
     }
@@ -247,7 +247,7 @@ const Navbar = ({ isMobile }) => {
                   </div>
                 </div>
               ) : (
-                <Link to="/userlogin" className="btn-secondary py-2.5 px-6 border-forest/20">
+                <Link to="/login" className="btn-secondary py-2.5 px-6 border-forest/20">
                   Login
                 </Link>
               )}
@@ -267,7 +267,7 @@ const Navbar = ({ isMobile }) => {
           {/* Mobile Profile Toggle */}
           {isMobile && (
             <Link 
-              to={isUserAuthenticated ? "#" : "/userlogin"} 
+              to={isUserAuthenticated ? "#" : "/login"} 
               onClick={isUserAuthenticated ? logoutUser : null}
               className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${isUserAuthenticated ? 'bg-forest text-white' : 'bg-gray-50 text-gray-600'}`}
             >

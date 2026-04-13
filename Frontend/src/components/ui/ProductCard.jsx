@@ -20,7 +20,7 @@ const ProductCard = ({ product }) => {
     e.stopPropagation();
 
     if (!isUserAuthenticated) {
-      navigate('/userlogin', { state: { from: location.pathname } });
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
 

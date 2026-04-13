@@ -44,7 +44,7 @@ const OurMasalas = () => {
 
   const handleAddToCart = () => {
     if (!isUserAuthenticated) {
-      navigate('/userlogin', { state: { from: location.pathname } });
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
 
@@ -60,7 +60,7 @@ const OurMasalas = () => {
 
   const handleWhatsAppOrder = () => {
     if (!isUserAuthenticated) {
-      navigate('/userlogin', { state: { from: location.pathname } });
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
     
