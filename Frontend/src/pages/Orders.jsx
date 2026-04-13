@@ -16,7 +16,7 @@ import {
   CreditCard,
   MapPin
 } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { ordersAPI } from '../api/apiService';
 import { useAuth } from '../context/AuthContext';
 

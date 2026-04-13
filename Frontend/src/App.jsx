@@ -20,7 +20,7 @@ import DashboardOverview from './pages/admin/DashboardOverview';
 import ManageProducts from './pages/admin/ManageProducts';
 import ManageOrders from './pages/admin/ManageOrders';
 import ManageSettings from './pages/admin/ManageSettings';
-import { ProtectedRoute } from './components/admin/ProtectedRoute';
+import ProtectedRoute from './components/admin/ProtectedRoute';
 import { CartProvider } from './context/CartContext';
 import { StoreProvider } from './context/StoreContext';
 import { AuthProvider } from './context/AuthContext';
