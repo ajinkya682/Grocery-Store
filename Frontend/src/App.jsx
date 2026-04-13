@@ -9,7 +9,6 @@ import SearchResults from './pages/SearchResults';
 import ProductDetails from './pages/ProductDetails';
 import OurMasalas from './pages/OurMasalas';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import ForgotPin from './pages/ForgotPin';
 import AdminLogin from './pages/AdminLogin';
 import Orders from './pages/Orders';
@@ -47,7 +46,6 @@ function App() {
                       <Route path="/search" element={<SearchResults />} />
                       <Route path="/our-masalas" element={<OurMasalas />} />
                       <Route path="/login" element={<Login />} />
-                      <Route path="/register" element={<Register />} />
                       <Route path="/forgot-pin" element={<ForgotPin />} />
                       <Route path="/orders" element={<Orders />} />
                     </Routes>

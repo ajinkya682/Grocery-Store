@@ -1,6 +1,6 @@
 // src/pages/Login.jsx
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Phone, 
@@ -13,19 +13,24 @@ import {
   Store, 
   ChevronRight,
   ShieldCheck,
-  ShoppingBag
+  ShoppingBag,
+  MapPin,
+  Pencil
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useStore } from '../context/StoreContext';
 import { STORE_NAME } from '../config/constants';
 
 const Login = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isRegistering = searchParams.get('mode') === 'register';
+  
   const [role, setRole] = useState('user'); // 'user' or 'admin'
   const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { loginUser, loginAdmin, isUserAuthenticated, isAdminAuthenticated } = useAuth();
+  const { loginUser, loginAdmin, registerUser, isUserAuthenticated, isAdminAuthenticated } = useAuth();
   const { storeSettings } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,10 +38,13 @@ const Login = () => {
 
   // Form State
   const [formData, setFormData] = useState({
+    name: '', // for register
     mobile: '',
-    email: '', // for admin
-    pin: '',
-    password: '' // for admin
+    email: '', // for admin login
+    address: '', // for register
+    pincode: '', // for register
+    pin: '', // for customer login/register
+    password: '' // for admin login
   });
 
   // Redirect if already authenticated
@@ -50,12 +58,21 @@ const Login = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    // Mobile and PIN restrictions
+    // Restrictions
     if (name === 'mobile' && value.length > 10) return;
     if (name === 'pin' && value.length > 6) return;
+    if (name === 'pincode' && value.length > 6) return;
     
     setFormData(prev => ({ ...prev, [name]: value }));
     setError('');
+  };
+
+  const toggleAuthMode = () => {
+    const newMode = isRegistering ? 'login' : 'register';
+    setSearchParams({ mode: newMode });
+    setError('');
+    // For registration, role is always user
+    if (newMode === 'register') setRole('user');
   };
 
   const handleSubmit = async (e) => {
@@ -64,14 +81,30 @@ const Login = () => {
     setError('');
 
     try {
-      if (role === 'admin') {
-        const res = await loginAdmin(formData.email, formData.password);
-        if (res.success) navigate('/admin');
-        else setError(res.message);
-      } else {
-        const res = await loginUser(formData.mobile, formData.pin);
+      if (isRegistering) {
+        // Registration Flow
+        if (formData.mobile.length !== 10) throw new Error('Mobile number must be 10 digits');
+        const res = await registerUser({
+          name: formData.name,
+          mobile: formData.mobile,
+          address: formData.address,
+          pincode: formData.pincode,
+          pin: formData.pin,
+          role: 'user'
+        });
         if (res.success) navigate(from, { replace: true });
         else setError(res.message);
+      } else {
+        // Login Flow
+        if (role === 'admin') {
+          const res = await loginAdmin(formData.email, formData.password);
+          if (res.success) navigate('/admin');
+          else setError(res.message);
+        } else {
+          const res = await loginUser(formData.mobile, formData.pin);
+          if (res.success) navigate(from, { replace: true });
+          else setError(res.message);
+        }
       }
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.');
@@ -88,7 +121,7 @@ const Login = () => {
         <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
         
         <motion.div
-          key={role}
+          key={`${role}-${isRegistering}`}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           className="relative z-10"
@@ -109,7 +142,9 @@ const Login = () => {
           </div>
 
           <h2 className="text-6xl font-display font-black leading-[1.1] mb-8">
-            {role === 'admin' ? (
+            {isRegistering ? (
+              <>Join the <br/><span className="text-accent italic">Community</span> Today.</>
+            ) : role === 'admin' ? (
               <>Control your <br/><span className="text-secondary italic">Business</span> Empire.</>
             ) : (
               <>Freshness <br/><span className="text-accent italic">Delivered</span> Daily.</>
@@ -117,9 +152,11 @@ const Login = () => {
           </h2>
           
           <p className="text-xl text-white/70 max-w-md font-medium leading-relaxed">
-            {role === 'admin' 
-              ? 'Access the master dashboard to manage orders, catalog, and store analytics in real-time.' 
-              : 'Sign in to access your farm-fresh groceries, track heritage spice orders, and manage your premium subscription.'}
+            {isRegistering 
+              ? 'Create an account to track heritage spice orders, manage your subscription, and access exclusive farm-fresh deals.'
+              : role === 'admin' 
+                ? 'Access the master dashboard to manage orders, catalog, and store analytics in real-time.' 
+                : 'Sign in to access your farm-fresh groceries and track your premium spice deliveries.'}
           </p>
 
           <div className="mt-16 flex items-center gap-6">
@@ -147,44 +184,140 @@ const Login = () => {
             Back to store
           </button>
 
-          {/* Role Toggle */}
-          <div className="bg-gray-100/80 p-1.5 rounded-2xl flex items-center mb-10 overflow-hidden border border-gray-200/50">
-            <button 
-              onClick={() => { 
-                setRole('user'); 
-                setError('');
-                setFormData(prev => ({ ...prev, email: '', password: '' }));
-              }}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all ${role === 'user' ? 'bg-white text-forest shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-            >
-              <User size={14} /> Customer
-            </button>
-            <button 
-              onClick={() => { 
-                setRole('admin'); 
-                setError(''); 
-                setFormData(prev => ({ ...prev, mobile: '', pin: '' }));
-              }}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all ${role === 'admin' ? 'bg-[#0F172A] text-white shadow-xl shadow-slate-900/10' : 'text-gray-400 hover:text-gray-600'}`}
-            >
-              <Store size={14} /> Store Owner
-            </button>
-          </div>
+          {/* Role Toggle (Only in Login Mode) */}
+          {!isRegistering && (
+            <div className="bg-gray-100/80 p-1.5 rounded-2xl flex items-center mb-10 overflow-hidden border border-gray-200/50">
+              <button 
+                onClick={() => { 
+                  setRole('user'); 
+                  setError('');
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all ${role === 'user' ? 'bg-white text-forest shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <User size={14} /> Customer
+              </button>
+              <button 
+                onClick={() => { 
+                  setRole('admin'); 
+                  setError(''); 
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all ${role === 'admin' ? 'bg-[#0F172A] text-white shadow-xl shadow-slate-900/10' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <Store size={14} /> Store Owner
+              </button>
+            </div>
+          )}
 
           <div className="mb-10">
             <h3 className="text-3xl font-display font-black text-slate-900 mb-2">
-              {role === 'admin' ? 'Owner Portal' : 'Glad you\'re here!'}
+              {isRegistering 
+                ? 'Create Account' 
+                : role === 'admin' ? 'Owner Portal' : 'Glad you\'re here!'}
             </h3>
             <p className="text-slate-500 font-bold">
-              {role === 'admin' 
-                ? 'Enter your administrative credentials to continue.' 
-                : 'Sign in to your account with your 10-digit mobile number'}
+              {isRegistering 
+                ? 'Fill in the details below to start your journey.'
+                : role === 'admin' 
+                  ? 'Enter your administrative credentials to continue.' 
+                  : 'Sign in to your account with your 10-digit mobile number'}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
             <AnimatePresence mode="wait">
-              {role === 'admin' ? (
+              {isRegistering ? (
+                <motion.div
+                  key="register-form"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="space-y-5"
+                >
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1">Full Name</label>
+                    <input
+                      type="text"
+                      name="name"
+                      required
+                      autoComplete="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="Ex: Rajesh P."
+                      className="input-field px-6 py-4"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1">Mobile Access</label>
+                    <div className="relative">
+                      <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">+91</span>
+                      <input
+                        type="tel"
+                        name="mobile"
+                        required
+                        autoComplete="tel"
+                        value={formData.mobile}
+                        onChange={handleInputChange}
+                        placeholder="9876543210"
+                        className="input-field pl-14 py-4"
+                        inputMode="numeric"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1">City/Area</label>
+                      <input
+                        name="address"
+                        required
+                        autoComplete="address-level2"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        placeholder="Ex: Rajarampuri"
+                        className="input-field px-6 py-4"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1">Pincode</label>
+                      <input
+                        type="number"
+                        name="pincode"
+                        required
+                        autoComplete="postal-code"
+                        value={formData.pincode}
+                        onChange={handleInputChange}
+                        placeholder="416008"
+                        className="input-field px-6 py-4"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1">6-Digit PIN</label>
+                    <div className="relative">
+                      <input
+                        type={showPin ? 'text' : 'password'}
+                        name="pin"
+                        required
+                        autoComplete="new-password"
+                        value={formData.pin}
+                        onChange={handleInputChange}
+                        placeholder="••••••"
+                        className="input-field pr-12 py-4"
+                        inputMode="numeric"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPin(!showPin)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-forest"
+                      >
+                        {showPin ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : role === 'admin' ? (
                 <motion.div
                   key="admin-form"
                   initial={{ opacity: 0, y: 10 }}
@@ -221,7 +354,7 @@ const Login = () => {
                 </motion.div>
               ) : (
                 <motion.div
-                  key="user-form"
+                  key="user-login-form"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
@@ -239,7 +372,7 @@ const Login = () => {
                         value={formData.mobile}
                         onChange={handleInputChange}
                         placeholder="9876543210"
-                        className="input-field pl-14"
+                        className="input-field pl-14 py-4"
                         inputMode="numeric"
                       />
                     </div>
@@ -256,7 +389,7 @@ const Login = () => {
                         value={formData.pin}
                         onChange={handleInputChange}
                         placeholder="••••••"
-                        className="input-field pr-12"
+                        className="input-field pr-12 py-4"
                         inputMode="numeric"
                       />
                       <button
@@ -290,29 +423,32 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-5 rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-[0.2em] text-white transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 ${role === 'admin' ? 'bg-[#0F172A] hover:bg-slate-800 shadow-2xl shadow-slate-900/10' : 'bg-primary hover:bg-forest shadow-2xl shadow-primary/10'}`}
+              className={`w-full py-5 rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-[0.2em] text-white transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 ${role === 'admin' && !isRegistering ? 'bg-[#0F172A] hover:bg-slate-800 shadow-2xl shadow-slate-900/10' : 'bg-primary hover:bg-forest shadow-2xl shadow-primary/10'}`}
             >
               {isLoading ? (
                 <Loader2 size={18} className="animate-spin" />
               ) : (
                 <>
-                  {role === 'admin' ? 'Access Dashboard' : 'Sign In Securely'}
+                  {isRegistering 
+                    ? 'Complete Registration' 
+                    : role === 'admin' ? 'Access Dashboard' : 'Sign In Securely'}
                   <ChevronRight size={16} />
                 </>
               )}
             </button>
           </form>
 
-          {role === 'user' && (
-            <div className="mt-10 text-center">
-              <Link 
-                to="/register"
-                className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-colors"
-              >
-                Don't have an account? <span className="text-primary underline underline-offset-4 decoration-2">Create one</span>
-              </Link>
-            </div>
-          )}
+          <div className="mt-10 text-center">
+            <button 
+              onClick={toggleAuthMode}
+              className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-colors focus:outline-none"
+            >
+              {isRegistering 
+                ? <>Already a member? <span className="text-primary underline underline-offset-4 decoration-2">Sign In</span></>
+                : <>Don't have an account? <span className="text-primary underline underline-offset-4 decoration-2">Create one</span></>
+              }
+            </button>
+          </div>
 
           {/* Security Footer */}
           <div className="mt-20 pt-10 border-t border-slate-100 flex flex-col items-center gap-4">

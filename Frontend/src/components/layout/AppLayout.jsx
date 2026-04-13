@@ -23,7 +23,7 @@ const AppLayout = ({ children }) => {
   }, [location.pathname]);
 
   // Auth pages are fullscreen standalone — hide Navbar / Footer / BottomNav
-  const isStandalonePage = ['/login', '/register', '/forgot-pin', '/adminlogin'].includes(location.pathname);
+  const isStandalonePage = ['/login', '/forgot-pin', '/adminlogin'].includes(location.pathname);
 
   return (
     <div className="flex flex-col min-h-screen bg-light">
