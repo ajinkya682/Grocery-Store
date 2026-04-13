@@ -176,13 +176,25 @@ const logout = async (req, res, next) => {
   }
 };
 
+// ─── GET /api/auth/me ────────────────────────────────────────────────────────
+const getMe = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ─── POST /api/auth/reset-pin ────────────────────────────────────────────────
 const resetPin = async (req, res, next) => {
   try {
     const { name, mobile, newPin } = req.body;
 
     // Find customer by mobile and name (case-insensitive for safety)
-    // We strictly use case-insensitive regex for name and exact match for mobile
     const user = await User.findOne({
       mobile: mobile.trim(),
       name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
@@ -209,4 +221,4 @@ const resetPin = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, refreshToken, logout, resetPin };
+module.exports = { register, login, refreshToken, logout, getMe, resetPin };
