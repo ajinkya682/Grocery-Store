@@ -80,9 +80,9 @@ userSchema.pre('validate', function(next) {
     this.email = undefined;
   }
 
-  // Convert empty strings to undefined for sparse index safety (global)
-  if (this.email === '') this.email = undefined;
-  if (this.mobile === '') this.mobile = undefined;
+  // Convert empty strings or nulls to undefined for sparse index safety (global)
+  if (this.email === '' || this.email === null) this.email = undefined;
+  if (this.mobile === '' || this.mobile === null) this.mobile = undefined;
 
   // Manual validation logic
   if (this.role === ROLES.ADMIN && !this.email) {
@@ -94,8 +94,13 @@ userSchema.pre('validate', function(next) {
   next();
 });
 
-// ─── Pre-save hook: hash password only when modified ──────────────────────────
+// ─── Pre-save hook: identity cleaning & password hashing ─────────────────────
 userSchema.pre('save', async function (next) {
+  // Redundant safety: Ensure email is never stored for users to prevent 409 conflicts
+  if (this.role === ROLES.USER) {
+    this.email = undefined;
+  }
+
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, BCRYPT_SALT_ROUNDS);
   next();

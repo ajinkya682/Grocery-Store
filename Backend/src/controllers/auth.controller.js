@@ -75,9 +75,10 @@ const register = async (req, res, next) => {
     }
 
     const user = await User.create(cleanedData);
-    logger.info(`[register] New ${role} registered: ${cleanedData.email || cleanedData.mobile}`);
+    logger.info(`[register] SUCCESS: ${role} created. Mobile=${cleanedData.mobile || 'N/A'} Email=${cleanedData.email || 'N/A'}`);
     sendTokenResponse(user, 201, res);
   } catch (err) {
+    logger.error(`[register] ERROR: ${err.message}`);
     next(err);
   }
 };
@@ -203,8 +204,9 @@ const resetPin = async (req, res, next) => {
       message: 'PIN updated successfully. Please login with your new PIN.'
     });
   } catch (err) {
+    logger.error(`[resetPin] ERROR: ${err.message} [mobile=${req.body.mobile}]`);
     next(err);
   }
 };
 
-module.exports = { register, login, refreshToken, logout, getMe, resetPin };
+module.exports = { register, login, refreshToken, logout, resetPin };
