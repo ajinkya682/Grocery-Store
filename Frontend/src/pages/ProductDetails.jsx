@@ -5,13 +5,16 @@ import { ChevronRight, Minus, Plus, Truck, CheckCircle2, RefreshCcw, ChevronLeft
 import { useCart } from '../context/CartContext';
 import { useProduct } from '../context/ProductContext';
 import { useAuth } from '../context/AuthContext';
+import { useStore } from '../context/StoreContext';
+import { generateWhatsAppLink } from '../utils/whatsapp';
 import ProductCard from '../components/ui/ProductCard';
 
 const ProductDetails = () => {
   const { id } = useParams();
   const { addItem, orderViaWhatsApp, openCart } = useCart();
   const { products } = useProduct();
-  const { isUserAuthenticated } = useAuth();
+  const { isUserAuthenticated, currentUser } = useAuth();
+  const { storeSettings } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [product, setProduct] = useState(null);
@@ -57,10 +60,52 @@ const ProductDetails = () => {
 
   const handleWhatsAppOrder = () => {
     if (!isUserAuthenticated) {
-      navigate('/login', { state: { from: location.pathname } });
+      navigate("/login", { state: { from: location.pathname } });
       return;
     }
-    orderViaWhatsApp();
+
+    if (product && currentUser) {
+      // Direct checkout for this specific item only
+      const itemSubtotal = product.price * quantity;
+      const deliveryFee = itemSubtotal >= 499 ? 0 : 40;
+      
+      const orderData = {
+        orderNumber: "DIRECT-PRODUCT",
+        items: [
+          {
+            productId: product._id || product.id,
+            quantity: quantity,
+            name: `${product.name} (${selectedWeight})`,
+            price: product.price,
+          },
+        ],
+        shippingAddress: {
+          name: currentUser.name || "Valued Customer",
+          phone: (currentUser.mobile || "").replace(/\D/g, "").slice(-10),
+          address: currentUser.address || "Address Not Provided",
+          pincode: (currentUser.pincode || "416000").replace(/\D/g, "").slice(0, 6),
+        },
+        pricing: {
+          subtotal: itemSubtotal,
+          deliveryFee: deliveryFee,
+          total: itemSubtotal + deliveryFee,
+        },
+      };
+
+      const waUrl = generateWhatsAppLink(
+        {
+          order: orderData,
+          currentUser,
+        },
+        storeSettings
+      );
+
+      if (waUrl) {
+        window.open(waUrl, "_blank");
+      }
+    } else if (!currentUser) {
+      navigate("/login", { state: { from: location.pathname } });
+    }
   };
 
   const increaseQty = () => setQuantity(q => q + 1);
