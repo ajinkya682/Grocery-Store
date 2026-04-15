@@ -76,7 +76,7 @@ const AdaptiveCart = () => {
                 items.map((item) => (
                   <motion.div
                     layout
-                    key={item._id || item.id}
+                    key={`${item._id || item.id}-${item.weight || 'default'}`}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="flex gap-4 p-4 bg-gray-50 rounded-3xl"
@@ -90,7 +90,7 @@ const AdaptiveCart = () => {
                       <div className="flex justify-between items-start mb-1">
                         <h4 className="text-sm font-bold text-forest truncate pr-2">{item.name}</h4>
                         <button
-                          onClick={() => removeItem(item._id || item.id)}
+                          onClick={() => removeItem(item._id || item.id, item.weight)}
                           className="text-gray-400 hover:text-red-500 transition-colors"
                         >
                           <Trash2 size={16} />
@@ -103,14 +103,14 @@ const AdaptiveCart = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-2 py-1">
                           <button
-                            onClick={() => updateQty(item._id || item.id, item.qty - 1)}
+                            onClick={() => updateQty(item._id || item.id, item.qty - 1, item.weight)}
                             className="w-7 h-7 flex items-center justify-center text-forest hover:text-primary transition-colors"
                           >
                             <Minus size={14} />
                           </button>
                           <span className="text-xs font-black min-w-[20px] text-center">{item.qty}</span>
                           <button
-                            onClick={() => updateQty(item._id || item.id, item.qty + 1)}
+                            onClick={() => updateQty(item._id || item.id, item.qty + 1, item.weight)}
                             className="w-7 h-7 flex items-center justify-center text-forest hover:text-primary transition-colors"
                           >
                             <Plus size={14} />

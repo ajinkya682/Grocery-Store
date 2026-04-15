@@ -14,27 +14,48 @@ const cartReducer = (state, action) => {
   switch (action.type) {
     case 'ADD_ITEM': {
       const payloadId = action.payload._id || action.payload.id;
-      const existing = state.items.find(i => (i._id || i.id) === payloadId);
+      const weight = action.payload.weight || 'default';
+      const existing = state.items.find(
+        (i) => (i._id || i.id) === payloadId && (i.weight || 'default') === weight
+      );
+
       if (existing) {
         return {
           ...state,
-          items: state.items.map(i =>
-            (i._id || i.id) === payloadId ? { ...i, qty: i.qty + 1 } : i
+          items: state.items.map((i) =>
+            (i._id || i.id) === payloadId && (i.weight || 'default') === weight
+              ? { ...i, qty: i.qty + 1 }
+              : i
           ),
         };
       }
       return { ...state, items: [...state.items, { ...action.payload, qty: 1 }] };
     }
-    case 'REMOVE_ITEM':
-      return { ...state, items: state.items.filter(i => (i._id || i.id) !== action.payload) };
+    case 'REMOVE_ITEM': {
+      const { id, weight = 'default' } = action.payload;
+      return {
+        ...state,
+        items: state.items.filter(
+          (i) => !((i._id || i.id) === id && (i.weight || 'default') === weight)
+        ),
+      };
+    }
     case 'UPDATE_QTY': {
-      if (action.payload.qty <= 0) {
-        return { ...state, items: state.items.filter(i => (i._id || i.id) !== action.payload.id) };
+      const { id, weight = 'default', qty } = action.payload;
+      if (qty <= 0) {
+        return {
+          ...state,
+          items: state.items.filter(
+            (i) => !((i._id || i.id) === id && (i.weight || 'default') === weight)
+          ),
+        };
       }
       return {
         ...state,
-        items: state.items.map(i =>
-          (i._id || i.id) === action.payload.id ? { ...i, qty: action.payload.qty } : i
+        items: state.items.map((i) =>
+          (i._id || i.id) === id && (i.weight || 'default') === weight
+            ? { ...i, qty }
+            : i
         ),
       };
     }
@@ -87,8 +108,10 @@ export const CartProvider = ({ children }) => {
     return true;
   };
 
-  const removeItem = (id)      => dispatch({ type: 'REMOVE_ITEM', payload: id });
-  const updateQty  = (id, qty) => dispatch({ type: 'UPDATE_QTY', payload: { id, qty } });
+  const removeItem = (id, weight = 'default') =>
+    dispatch({ type: 'REMOVE_ITEM', payload: { id, weight } });
+  const updateQty = (id, qty, weight = 'default') =>
+    dispatch({ type: 'UPDATE_QTY', payload: { id, qty, weight } });
   const clearCart  = ()        => dispatch({ type: 'CLEAR_CART' });
 
   const toggleCart = () => {

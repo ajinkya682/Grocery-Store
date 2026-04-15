@@ -16,6 +16,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import LazyImage from "../components/ui/LazyImage";
+import { useStore } from "../context/StoreContext";
+import { generateWhatsAppLink } from "../utils/whatsapp";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -25,7 +27,8 @@ const fadeUp = {
 const OurMasalas = () => {
   const { products } = useProduct();
   const { addItem, orderViaWhatsApp, openCart } = useCart();
-  const { isUserAuthenticated } = useAuth();
+  const { isUserAuthenticated, currentUser } = useAuth();
+  const { storeSettings } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,13 +36,27 @@ const OurMasalas = () => {
   const [activeProduct, setActiveProduct] = useState(null);
   const [isAdded, setIsAdded] = useState(false);
 
+  const weightPrices = {
+    "100 g": 100,
+    "250 g": 250,
+    "500 g": 500,
+  };
+
   // Sync active product based on weight selection
   useEffect(() => {
-    const p = products.find(
-      (prod) =>
-        prod.category === "Our Masalas" && prod.weight === selectedWeight,
-    );
-    setActiveProduct(p);
+    const baseProduct = products.find(
+      (prod) => prod.category === "Our Masalas"
+    ) || products.find(p => p.category === "Masala") || products[0];
+
+    if (baseProduct) {
+      const price = weightPrices[selectedWeight] || baseProduct.price;
+      setActiveProduct({
+        ...baseProduct,
+        weight: selectedWeight,
+        price: price,
+        originalPrice: Math.round(price * 1.2), // Dynamic original price for UI
+      });
+    }
   }, [selectedWeight, products]);
 
   const handleAddToCart = () => {
@@ -60,15 +77,49 @@ const OurMasalas = () => {
 
   const handleWhatsAppOrder = () => {
     if (!isUserAuthenticated) {
-      navigate('/login', { state: { from: location.pathname } });
+      navigate("/login", { state: { from: location.pathname } });
       return;
     }
-    
-    if (activeProduct) {
-      // Ensure item is in cart first
-      addItem(activeProduct);
-      // Open cart for review before sending to WhatsApp
-      openCart();
+
+    if (activeProduct && currentUser) {
+      // Direct checkout for this specific item
+      const deliveryFee = activeProduct.price >= 499 ? 0 : 40;
+      const orderData = {
+        orderNumber: "DIRECT-INQUIRY",
+        items: [
+          {
+            productId: activeProduct._id || activeProduct.id,
+            quantity: 1,
+            name: `${activeProduct.name} (${activeProduct.weight})`,
+            price: activeProduct.price,
+          },
+        ],
+        shippingAddress: {
+          name: currentUser.name || "Valued Customer",
+          phone: (currentUser.mobile || "").replace(/\D/g, "").slice(-10),
+          address: currentUser.address || "Address Not Provided",
+          pincode: (currentUser.pincode || "416000").replace(/\D/g, "").slice(0, 6),
+        },
+        pricing: {
+          subtotal: activeProduct.price,
+          deliveryFee: deliveryFee,
+          total: activeProduct.price + deliveryFee,
+        },
+      };
+
+      const waUrl = generateWhatsAppLink(
+        {
+          order: orderData,
+          currentUser,
+        },
+        storeSettings
+      );
+
+      if (waUrl) {
+        window.open(waUrl, "_blank");
+      }
+    } else if (!currentUser) {
+      navigate("/login", { state: { from: location.pathname } });
     }
   };
 

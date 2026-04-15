@@ -75,7 +75,7 @@ const Cart = () => {
                         <div className="flex items-start justify-between gap-4">
                           <h3 className="font-black text-forest text-lg truncate">{item.name}</h3>
                           <button
-                            onClick={() => removeItem(item.id)}
+                            onClick={() => removeItem(item.id, item.weight)}
                             className="text-red-400 hover:text-red-600 transition-colors"
                           >
                             <Trash2 size={18} />
@@ -87,9 +87,9 @@ const Cart = () => {
                       <div className="flex items-center justify-between">
                         <p className="text-primary font-black text-xl">₹{item.price}</p>
                         <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-1.5 border border-gray-100">
-                          <button onClick={() => updateQty(item.id, item.qty - 1)} className="w-8 h-8 flex items-center justify-center font-bold text-gray-400 hover:text-primary">−</button>
+                          <button onClick={() => updateQty(item.id, item.qty - 1, item.weight)} className="w-8 h-8 flex items-center justify-center font-bold text-gray-400 hover:text-primary">−</button>
                           <span className="font-black text-forest w-4 text-center">{item.qty}</span>
-                          <button onClick={() => updateQty(item.id, item.qty + 1)} className="w-8 h-8 flex items-center justify-center font-bold text-gray-400 hover:text-primary">+</button>
+                          <button onClick={() => updateQty(item.id, item.qty + 1, item.weight)} className="w-8 h-8 flex items-center justify-center font-bold text-gray-400 hover:text-primary">+</button>
                         </div>
                       </div>
                     </div>
