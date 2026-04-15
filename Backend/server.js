@@ -10,9 +10,28 @@ const logger = require('./src/utils/logger');
 
 const PORT = process.env.PORT || 5000;
 
+// ─── Environment Validation ──────────────────────────────────────────────────
+const checkEnv = () => {
+  const critical = ['MONGODB_URI', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
+  const missing = critical.filter((key) => !process.env[key]);
+  
+  if (missing.length > 0) {
+    logger.error(`❌ [Config] FATAL: Missing critical environment variables: ${missing.join(', ')}`);
+    logger.error('Please set these in your .env file or production dashboard.');
+    process.exit(1);
+  } else {
+    logger.info('✅ [Config] All critical environment variables are present');
+  }
+};
+
 // ─── Start Server ─────────────────────────────────────────────────────────────
 const startServer = async () => {
+  checkEnv();
+  
+  logger.info('⏳ [Startup] Connecting to database...');
   await connectDB();
+  
+  logger.info('⏳ [Startup] Seeding default categories...');
   await seedDefaultCategories();
 
   const server = app.listen(PORT, () => {

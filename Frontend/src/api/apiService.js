@@ -19,7 +19,7 @@ console.log(`[API Service] Target: ${BASE_URL || 'RELATIVE'} | Mode: ${isProd ? 
 // ─── Axios Instance ───────────────────────────────────────────────────────────
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 15000,
+  timeout: 60000,
 });
 
 // ─── Request Interceptor: Attach JWT & Handle Content-Type ───────────────────

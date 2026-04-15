@@ -11,9 +11,14 @@ const handleCastError = (err) =>
   new AppError(`Invalid ${err.path}: ${err.value}`, 400, 'INVALID_ID');
 
 const handleDuplicateKeyError = (err) => {
-  const field = Object.keys(err.keyValue)[0];
-  const value = err.keyValue[field];
+  // Safe extraction of field and value
+  const keyValue = err.keyValue || {};
+  const fields = Object.keys(keyValue);
+  const field = fields.length > 0 ? fields[0] : 'record';
+  const value = keyValue[field] || 'unknown';
+
   logger.error(`[DuplicateKeyError] Field: ${field}, Value: ${value}`);
+  
   return new AppError(
     `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`,
     409,

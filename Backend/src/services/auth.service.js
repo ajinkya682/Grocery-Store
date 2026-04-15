@@ -6,6 +6,9 @@ const { AuthError } = require('../utils/AppError');
 // ─── Token Generation ─────────────────────────────────────────────────────────
 
 const generateAccessToken = (userId, role) => {
+  if (!process.env.JWT_ACCESS_SECRET) {
+    throw new Error('JWT_ACCESS_SECRET is not defined in environment variables');
+  }
   return jwt.sign(
     { id: userId, role },
     process.env.JWT_ACCESS_SECRET,
@@ -14,6 +17,9 @@ const generateAccessToken = (userId, role) => {
 };
 
 const generateRefreshToken = (userId) => {
+  if (!process.env.JWT_REFRESH_SECRET) {
+    throw new Error('JWT_REFRESH_SECRET is not defined in environment variables');
+  }
   return jwt.sign(
     { id: userId },
     process.env.JWT_REFRESH_SECRET,

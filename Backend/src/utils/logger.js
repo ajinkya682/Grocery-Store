@@ -15,31 +15,29 @@ const logFormat = printf(({ level, message, timestamp: ts, stack }) => {
 });
 
 const transports = [
-  // Always write errors to file
-  new winston.transports.File({
-    filename: path.join(process.cwd(), 'logs', 'error.log'),
-    level: 'error',
-    maxsize: 5 * 1024 * 1024, // 5 MB
-    maxFiles: 5,
-  }),
-  new winston.transports.File({
-    filename: path.join(process.cwd(), 'logs', 'combined.log'),
-    maxsize: 10 * 1024 * 1024,
-    maxFiles: 5,
+  new winston.transports.Console({
+    format: combine(
+      colorize(),
+      logFormat
+    ),
   }),
 ];
 
-// Console transport only in development
+// File transport only in non-production environments to avoid issues with ephemeral storage
 if (!isProd) {
   transports.push(
-    new winston.transports.Console({
-      format: combine(colorize(), logFormat),
+    new winston.transports.File({
+      filename: path.join(process.cwd(), 'logs', 'error.log'),
+      level: 'error',
+    }),
+    new winston.transports.File({
+      filename: path.join(process.cwd(), 'logs', 'combined.log'),
     })
   );
 }
 
 const logger = winston.createLogger({
-  level: isProd ? 'warn' : 'debug',
+  level: isProd ? 'info' : 'debug',
   format: combine(
     errors({ stack: true }),
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),

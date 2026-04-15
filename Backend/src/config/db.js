@@ -12,35 +12,35 @@ const repairIndexes = async () => {
     const db = mongoose.connection.db;
     const usersCollection = db.collection('users');
     
-    logger.info('🔍 [IndexRepair] Checking for stale indexes...');
+    logger.info('🔍 [Startup] [IndexRepair] Checking for stale indexes...');
 
     // Attempt to drop email_1 index
     try {
       await usersCollection.dropIndex('email_1');
-      logger.info('✅ [IndexRepair] email_1 dropped successfully (will be rebuilt as sparse)');
+      logger.info('✅ [Startup] [IndexRepair] email_1 dropped successfully');
     } catch (e) {
       if (e.codeName === 'IndexNotFound') {
-        logger.info('ℹ️ [IndexRepair] email_1 not found, no drop needed');
+        logger.debug('ℹ️ [Startup] [IndexRepair] email_1 not found, skipping');
       } else {
-        logger.warn(`⚠️ [IndexRepair] Warning dropping email_1: ${e.message}`);
+        logger.warn(`⚠️ [Startup] [IndexRepair] Warning dropping email_1: ${e.message}`);
       }
     }
 
     // Attempt to drop mobile_1 index
     try {
       await usersCollection.dropIndex('mobile_1');
-      logger.info('✅ [IndexRepair] mobile_1 dropped successfully (will be rebuilt as sparse)');
+      logger.info('✅ [Startup] [IndexRepair] mobile_1 dropped successfully');
     } catch (e) {
       if (e.codeName === 'IndexNotFound') {
-        logger.info('ℹ️ [IndexRepair] mobile_1 not found, no drop needed');
+        logger.debug('ℹ️ [Startup] [IndexRepair] mobile_1 not found, skipping');
       } else {
-        logger.warn(`⚠️ [IndexRepair] Warning dropping mobile_1: ${e.message}`);
+        logger.warn(`⚠️ [Startup] [IndexRepair] Warning dropping mobile_1: ${e.message}`);
       }
     }
 
-    logger.info('🚀 [IndexRepair] Cleanup complete. Mongoose will now rebuild indexes.');
+    logger.info('🚀 [Startup] [IndexRepair] Cleanup complete. Mongoose will rebuild indexes if needed.');
   } catch (err) {
-    logger.error(`❌ [IndexRepair] Fatal error during index repair: ${err.message}`);
+    logger.error(`❌ [Startup] [IndexRepair] Fatal error during index repair: ${err.message}`);
   }
 };
 
@@ -50,7 +50,7 @@ const connectDB = async () => {
   try {
     const conn = await mongoose.connect(MONGODB_URI, {
       // Mongoose 8+ handles connection pooling automatically
-      serverSelectionTimeoutMS: 10000, // 10s before giving up
+      serverSelectionTimeoutMS: 20000, // 20s before giving up
       socketTimeoutMS: 45000,
     });
 
