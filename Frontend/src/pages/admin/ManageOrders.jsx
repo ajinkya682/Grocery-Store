@@ -19,6 +19,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useStore } from '../../context/StoreContext';
 
 const ORDER_STATUSES = [
   { label: 'Pending', icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50' },
@@ -206,6 +207,7 @@ const OrderRow = ({ order, onStatusChange }) => {
 };
 
 const ManageOrders = () => {
+  const { storeSettings } = useStore();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
@@ -245,6 +247,61 @@ const ManageOrders = () => {
     return matchesStatus && matchesSearch;
   });
 
+  const handleExportExcel = () => {
+    if (filteredOrders.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const storeName = storeSettings?.identity?.name || "Our Grocery Store";
+    const dateStr = new Date().toLocaleDateString();
+    
+    // CSV Construction
+    const headers = [
+      "Order ID", "Date", "Time", "Customer", "Phone", "Weight/Unit", 
+      "Items Detailed", "Subtotal", "Delivery", "Total", "Status", "Address"
+    ];
+
+    const rows = filteredOrders.map(o => {
+      const orderDate = new Date(o.createdAt || o.date);
+      const itemsList = (o.items || []).map(i => `${i.name} (${i.quantity}x)`).join("; ");
+      const fullAddress = `"${(o.shippingAddress?.address || '').replace(/"/g, '""')}, ${(o.shippingAddress?.city || '').replace(/"/g, '""')} - ${o.shippingAddress?.pincode || ''}"`;
+      
+      return [
+        o.orderNumber || o._id,
+        orderDate.toLocaleDateString(),
+        orderDate.toLocaleTimeString(),
+        `"${(o.shippingAddress?.name || o.user?.name || 'Guest').replace(/"/g, '""')}"`,
+        `"${o.shippingAddress?.phone || o.user?.mobile || 'N/A'}"`,
+        `"${(o.items?.[0]?.weight || o.items?.[0]?.unit || 'Standard').replace(/"/g, '""')}"`,
+        `"${itemsList.replace(/"/g, '""')}"`,
+        o.pricing?.subtotal || o.total || 0,
+        o.pricing?.deliveryFee || 0,
+        o.pricing?.total || o.total || 0,
+        o.status,
+        fullAddress
+      ];
+    });
+
+    const csvContent = [
+      `"${storeName.replace(/"/g, '""')}"`,
+      `"Order Export Report - ${dateStr}"`,
+      "", // Spacing
+      headers.join(","),
+      ...rows.map(r => r.join(","))
+    ].join("\n");
+
+    // Create Blob with BOM for Excel UTF-8 support
+    const blob = new Blob(["\ufeff", csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Orders_Export_${filter}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -263,8 +320,11 @@ const ManageOrders = () => {
           <p className="text-slate-500 font-bold text-sm mt-1">Track and manage customer checkout requests.</p>
         </div>
         <div className="flex gap-3 w-full sm:w-auto">
-          <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
-            <Package size={18} /> Export CSV
+          <button 
+            onClick={handleExportExcel}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all"
+          >
+            <Package size={18} /> Export Excel
           </button>
         </div>
       </div>
