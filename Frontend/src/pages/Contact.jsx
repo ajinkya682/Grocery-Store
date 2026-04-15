@@ -109,15 +109,15 @@ const Contact = () => {
             {/* WhatsApp Direct */}
             <button
               onClick={handleSendMessage}
-              className="w-full text-left block bg-primary-500 hover:bg-primary-600 rounded-3xl p-8 transition-colors group cursor-pointer shadow-green"
+              className="w-full text-left block bg-[#25D366] hover:bg-[#128C7E] rounded-3xl p-8 transition-colors group cursor-pointer shadow-xl"
             >
               <div className="flex items-center gap-3 mb-2">
                 <MessageSquare size={24} className="text-white" />
-                <h2 className="text-xl font-bold text-green  group-hover:underline">
+                <h2 className="text-xl font-bold text-white group-hover:underline">
                   Chat with us on WhatsApp
                 </h2>
               </div>
-              <p className="text-primary-50 text-sm">
+              <p className="text-white/90 text-sm font-medium">
                 Fastest way to reach us — typically responds in minutes
               </p>
             </button>
@@ -145,35 +145,15 @@ const Contact = () => {
           {/* Right Column */}
           <div className="lg:col-span-7 space-y-6">
             {/* Map Interaction */}
-            <div className="w-full h-[300px] bg-primary-100 rounded-3xl overflow-hidden relative border border-gray-100">
-              {storeSettings?.location?.mapEmbedUrl ? (
-                <iframe
-                  title="Store Location"
-                  src={storeSettings.location.mapEmbedUrl}
-                  className="w-full h-full border-0"
-                  allowFullScreen=""
-                  loading="lazy"
-                ></iframe>
-              ) : (
-                <>
-                  <div
-                    className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-multiply"
-                    style={{
-                      backgroundImage:
-                        "url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%25%22 height=%22100%25%22><defs><pattern id=%22grid%22 width=%2240%22 height=%2240%22 patternUnits=%22userSpaceOnUse%22><path d=%22M 40 0 L 0 0 0 40%22 fill=%22none%22 stroke=%22%2322c55e%22 stroke-width=%221%22 opacity=%220.3%22/></pattern></defs><rect width=%22100%25%22 height=%22100%25%22 fill=%22url(%23grid)%22 /></svg>')",
-                    }}
-                  ></div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-lg transform -translate-y-4">
-                      <div className="w-4 h-4 bg-primary-500 rounded-full animate-ping absolute"></div>
-                      <MapPin
-                        size={24}
-                        className="text-primary-600 relative z-10"
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
+            <div className="w-full h-[450px] bg-gray-100 rounded-3xl overflow-hidden relative border border-gray-100 shadow-card">
+              <iframe
+                title="Store Location"
+                src="https://www.google.com/maps/embed?pb=!3m2!1sen!2sin!4v1776263501135!5m2!1sen!2sin!6m8!1m7!1sXzqdHW2LwzuaohvXdZ2VaA!2m2!1d20.44931100225097!2d75.42171643227351!3f17.03308702281748!4f-5.698954223846755!5f1.2205083079694439"
+                className="w-full h-full border-0"
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              ></iframe>
             </div>
 
             {/* Contact Form */}
